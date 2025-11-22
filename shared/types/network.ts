@@ -30,6 +30,7 @@ export type SharedNetwork = {
 	uuid: string;
 	name: string;
 	nick: string;
+	host: string; // ZUBR-WEB: Host for home server detection
 	serverOptions: SharedServerOptions;
 	status: SharedNetworkStatus;
 	channels: SharedNetworkChan[];

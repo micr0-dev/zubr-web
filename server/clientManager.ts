@@ -26,14 +26,12 @@ class ClientManager {
 		this.identHandler = identHandler;
 		this.webPush = new WebPush();
 
-		if (!Config.values.public) {
-			this.loadUsers();
+		// ZUBR-WEB: Stateless mode - don't load users from disk
+		// Users are created in-memory on login from zubr-server API data
+		log.info("Running in stateless mode - users created on-demand from zubr-server");
 
-			// LDAP does not have user commands, and users are dynamically
-			// created upon logon, so we don't need to watch for new files
-			if (!Config.values.ldap.enable) {
-				this.autoloadUsers();
-			}
+		if (!Config.values.public) {
+			// Note: loadUsers() and autoloadUsers() disabled for stateless operation
 		}
 	}
 
@@ -113,31 +111,25 @@ class ClientManager {
 	}
 
 	loadUser(name: string) {
+		// ZUBR-WEB: In stateless mode, check if client already exists in-memory first
+		let client = this.findClient(name);
+
+		if (client) {
+			// Client already exists (created by auth plugin in stateless mode)
+			return client;
+		}
+
+		// Try to load from disk (for compatibility, but unused in stateless mode)
 		const userConfig = this.readUserConfig(name);
 
 		if (!userConfig) {
 			return;
 		}
 
-		let client = this.findClient(name);
-
-		if (client) {
-			if (userConfig.password !== client.config.password) {
-				/**
-				 * If we happen to reload an existing client, make super duper sure we
-				 * have their latest password. We're not replacing the entire config
-				 * object, because that could have undesired consequences.
-				 *
-				 * @see https://github.com/thelounge/thelounge/issues/598
-				 */
-				client.config.password = userConfig.password;
-				log.info(`Password for user ${colors.bold(name)} was reset.`);
-			}
-		} else {
-			client = new Client(this, name, userConfig);
-			client.connect();
-			this.clients.push(client);
-		}
+		// Create new client from disk config
+		client = new Client(this, name, userConfig);
+		client.connect();
+		this.clients.push(client);
 
 		return client;
 	}
@@ -154,6 +146,12 @@ class ClientManager {
 	};
 
 	addUser(name: string, password: string | null, enableLog?: boolean) {
+		// ZUBR-WEB: Stateless mode - no file creation
+		// This method is a no-op for backward compatibility
+		log.info(`User ${colors.green(name)} will be created in-memory on first login`);
+		return true;
+
+		/* ORIGINAL FILE CREATION CODE - DISABLED FOR STATELESS MODE
 		if (path.basename(name) !== name) {
 			throw new Error(`${name} is an invalid username.`);
 		}
@@ -165,9 +163,47 @@ class ClientManager {
 			return false;
 		}
 
+		// ZUBR-WEB: Auto-create home network if enabled
+		let networks;
+		if (Config.values.homeServer?.enabled) {
+			const homeServer = Config.values.homeServer;
+			const uuid = require("uuid");
+
+			// Convert channel names to channel objects
+			const channels = (homeServer.channels || []).map((channelName: string) => ({
+				name: channelName,
+			}));
+
+			networks = [
+				{
+					uuid: uuid.v4(),
+					name: homeServer.name || "Home Server",
+					host: homeServer.host || "localhost",
+					port: homeServer.port || 6667,
+					tls: homeServer.tls || false,
+					rejectUnauthorized: homeServer.rejectUnauthorized !== false,
+					password: "",
+					nick: name, // Use username as IRC nick
+					username: name,
+					realname: name,
+					sasl: "",
+					saslAccount: "",
+					saslPassword: "",
+					channels: channels,
+					ignoreList: [],
+					proxyHost: "",
+					proxyPort: 1080,
+					proxyUsername: "",
+					proxyPassword: "",
+					proxyEnabled: false,
+				},
+			];
+		}
+
 		const user = {
 			password: password || "",
 			log: enableLog,
+			networks: networks || [], // ZUBR-WEB: Include home network
 		};
 
 		try {
@@ -211,6 +247,7 @@ class ClientManager {
 		}
 
 		return true;
+		*/
 	}
 
 	getDataToSave(client: Client) {
@@ -223,7 +260,56 @@ class ClientManager {
 		return {newUser, newHash};
 	}
 
-	saveUser(client: Client, callback?: (err?: any) => void) {
+	async saveUser(client: Client, callback?: (err?: any) => void) {
+		// ZUBR-WEB: Stateless mode - save to zubr-server API instead of files
+		if (!client.config.zubrToken) {
+			log.warn(`Cannot save user ${colors.bold(client.name)} - no zubr token available`);
+			if (callback) {
+				callback(new Error("No zubr token available"));
+			}
+			return false;
+		}
+
+		try {
+			// Import zubrClient dynamically to avoid circular dependency
+			const zubrClient = require("./api/zubr-client").default;
+
+			// Prepare config for saving (exclude sensitive/session data)
+			const configToSave = {
+				log: client.config.log,
+				clientSettings: client.config.clientSettings || {},
+				networks: client.networks.map((n) => n.export()),
+			};
+
+			const result = await zubrClient.saveUserConfig(client.config.zubrToken, configToSave);
+
+			if (result.success) {
+				if (callback) {
+					callback();
+				}
+				return true;
+			} else {
+				log.error(
+					`Failed to save user ${colors.bold(client.name)} to zubr-server: ${result.error}`
+				);
+				if (callback) {
+					callback(new Error(result.error));
+				}
+				return false;
+			}
+		} catch (error) {
+			log.error(
+				`Error saving user ${colors.bold(client.name)} to zubr-server: ${
+					error instanceof Error ? error.message : String(error)
+				}`
+			);
+			if (callback) {
+				callback(error);
+			}
+			return false;
+		}
+
+		/* ORIGINAL FILE SAVING CODE - DISABLED FOR STATELESS MODE
 		const {newUser, newHash} = this.getDataToSave(client);
 
 		// Do not write to disk if the exported data hasn't actually changed
@@ -250,6 +336,7 @@ class ClientManager {
 				callback(e);
 			}
 		}
+		*/
 	}
 
 	removeUser(name) {

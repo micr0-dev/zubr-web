@@ -6,13 +6,21 @@ import Helper from "../../helper";
 import Config from "../../config";
 import Utils from "../utils";
 
+// ZUBR-WEB: User management disabled - users are managed via zubr-server API
 const program = new Command("reset");
 program
-	.description("Reset user password")
+	.description("Reset user password (DISABLED in zubr-web - use zubr-server API)")
 	.on("--help", Utils.extraHelp)
 	.argument("<name>", "name of the user")
 	.option("--password [password]", "new password, will be prompted if not specified")
 	.action(function (name, cmdObj) {
+		log.error(
+			"Password reset is disabled in zubr-web. Users are managed via zubr-server API."
+		);
+		log.error("Please use the web interface to reset passwords.");
+
+		/* ORIGINAL RESET PASSWORD CODE - DISABLED FOR ZUBR-WEB
+		return;
 		if (!fs.existsSync(Config.getUsersPath())) {
 			log.error(`${Config.getUsersPath()} does not exist.`);
 			return;
@@ -71,5 +79,7 @@ function change(name, password) {
 
 	log.info(`Successfully reset password for ${colors.bold(name)}.`);
 }
+		*/
+	});
 
 export default program;

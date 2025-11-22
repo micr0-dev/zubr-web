@@ -6,14 +6,22 @@ import Helper from "../../helper";
 import Config from "../../config";
 import Utils from "../utils";
 
+// ZUBR-WEB: User management disabled - users are managed via zubr-server API
 const program = new Command("add");
 program
-	.description("Add a new user")
+	.description("Add a new user (DISABLED in zubr-web - use zubr-server API)")
 	.on("--help", Utils.extraHelp)
 	.option("--password [password]", "new password, will be prompted if not specified")
 	.option("--save-logs", "if password is specified, this enables saving logs to disk")
 	.argument("<name>", "name of the user")
 	.action(function (name, cmdObj) {
+		log.error(
+			"User management is disabled in zubr-web. Users are managed via zubr-server API."
+		);
+		log.error("Please use the web interface to create new users.");
+
+		/* ORIGINAL ADD USER CODE - DISABLED FOR ZUBR-WEB
+		return;
 		if (!fs.existsSync(Config.getUsersPath())) {
 			log.error(`${Config.getUsersPath()} does not exist.`);
 			return;
@@ -79,5 +87,7 @@ function add(manager, name, password, enableLog) {
 	log.info(`User ${colors.bold(name)} created.`);
 	log.info(`User file located at ${colors.green(Config.getUserConfigPath(name))}.`);
 }
+		*/
+	});
 
 export default program;

@@ -12,7 +12,10 @@
 		</button>
 		<span v-else class="collapse-network" />
 		<div class="lobby-wrap">
-			<span :title="channel.name" class="name">{{ channel.name }}</span>
+			<span :title="channel.name" class="name">
+				<span v-if="isHomeServer" class="home-icon" aria-label="Home Server"></span>
+				{{ channel.name }}
+			</span>
 			<span
 				v-if="network.status.connected && !network.status.secure"
 				class="not-secure-tooltip tooltipped tooltipped-w"
@@ -81,6 +84,11 @@ export default defineComponent({
 			return roundBadgeNumber(channel.value.unread);
 		});
 
+		// ZUBR-WEB: Check if this is the home server by comparing host
+		const isHomeServer = computed(() => {
+			return props.network.host === "127.0.0.1" || props.network.host === "localhost";
+		});
+
 		const onCollapseClick = () => {
 			collapseNetwork(props.network, !props.network.isCollapsed);
 		};
@@ -93,6 +101,7 @@ export default defineComponent({
 			channel,
 			joinChannelLabel,
 			unreadCount,
+			isHomeServer,
 			onCollapseClick,
 			getExpandLabel,
 		};

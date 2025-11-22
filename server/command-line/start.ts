@@ -21,17 +21,14 @@ program
 	});
 
 function initalizeConfig() {
-	if (!fs.existsSync(Config.getConfigPath())) {
-		fs.mkdirSync(Config.getHomePath(), {recursive: true});
-		fs.chmodSync(Config.getHomePath(), "0700");
-		fs.copyFileSync(
-			path.resolve(path.join(__dirname, "..", "..", "defaults", "config.js")),
-			Config.getConfigPath()
-		);
-		log.info(`Configuration file created at ${colors.green(Config.getConfigPath())}.`);
-	}
+	// ZUBR-WEB: Stateless mode - minimal directory setup
+	// No config file, no user files
 
-	fs.mkdirSync(Config.getUsersPath(), {recursive: true, mode: 0o700});
+	// Create home directory for logs/storage only
+	fs.mkdirSync(Config.getHomePath(), {recursive: true});
+	fs.chmodSync(Config.getHomePath(), "0700");
+
+	// Note: users/ directory not needed in stateless mode
 }
 
 export default program;

@@ -19,7 +19,38 @@ export default <IrcEventHandler>function (irc, network) {
 		true
 	);
 
+	// ZUBR-WEB: Debug connection settings
+	log.info(
+		`Connecting to ${network.host}:${network.port} (TLS: ${network.tls}, nick: ${network.nick})`
+	);
+
 	irc.on("registered", function () {
+		// ZUBR-WEB: Update network name from IRC server if available
+		const ircOptions = irc.network.options as any;
+
+		// Try to get network name from IRC server options
+		let serverNetworkName = ircOptions.NETWORK as string;
+
+		// If NETWORK option not available, try using the hostname
+		if (!serverNetworkName && network.name === "Home Server") {
+			serverNetworkName = network.host;
+			log.info(
+				`IRC server did not provide NETWORK option, using hostname: ${serverNetworkName}`
+			);
+		}
+
+		if (serverNetworkName && serverNetworkName !== network.name) {
+			network.name = serverNetworkName;
+			network.getLobby().name = serverNetworkName;
+
+			// Save updated network name to user config
+			client.save();
+
+			log.info(
+				`Updated network name to "${serverNetworkName}" from IRC server for ${client.name}`
+			);
+		}
+
 		if (network.irc.network.cap.enabled.length > 0) {
 			network.getLobby().pushMessage(
 				client,
@@ -164,6 +195,7 @@ export default <IrcEventHandler>function (irc, network) {
 	}
 
 	irc.on("socket error", function (err) {
+		log.error(`Socket error on ${network.host}:${network.port}: ${err}`);
 		network.getLobby().pushMessage(
 			client,
 			new Msg({
@@ -172,6 +204,11 @@ export default <IrcEventHandler>function (irc, network) {
 			}),
 			true
 		);
+	});
+
+	// ZUBR-WEB: Debug connection timeout
+	irc.on("connecting", function () {
+		log.info(`Connection attempt to ${network.host}:${network.port} starting...`);
 	});
 
 	irc.on("reconnecting", function (data) {

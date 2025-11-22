@@ -11,9 +11,9 @@ export type AuthHandler = (
 	callback: (success: boolean) => void
 ) => void;
 
-// The order defines priority: the first available plugin is used.
-// Always keep 'local' auth plugin at the end of the list; it should always be enabled.
-const plugins = [import("./auth/ldap"), import("./auth/local")];
+// ZUBR-WEB: The order defines priority: the first available plugin is used.
+// Zubr auth plugin has highest priority, followed by LDAP, then local (disabled)
+const plugins = [import("./auth/zubr"), import("./auth/ldap"), import("./auth/local")];
 
 const toExport = {
 	moduleName: "<module with no name>",

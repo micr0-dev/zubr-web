@@ -10,15 +10,58 @@
 					Edit {{ defaults.name }}
 				</template>
 				<template v-else>
-					Connect
-					<template
-						v-if="config?.lockNetwork && store?.state.serverConfiguration?.public"
-					>
-						to {{ defaults.name }}
-					</template>
+					Connect to a remote server
 				</template>
 			</h1>
-			<template v-if="!config?.lockNetwork">
+
+			<!-- ZUBR-WEB: Simplified remote server connection -->
+			<template v-if="!defaults.uuid">
+				<p style="margin-bottom: 20px; color: #767676;">
+					Enter the domain of the Zubr server you want to connect to. The connection will be secure and encrypted.
+				</p>
+
+				<div class="connect-row">
+					<label for="connect:domain">Server Domain</label>
+					<input
+						id="connect:domain"
+						v-model.trim="remoteDomain"
+						class="input"
+						placeholder="example.com"
+						maxlength="255"
+						required
+						@input="onDomainChanged"
+					/>
+				</div>
+
+				<div class="connect-row">
+					<label for="connect:channels">Channels (optional)</label>
+					<input
+						id="connect:channels"
+						v-model.trim="defaults.join"
+						class="input"
+						name="join"
+						placeholder="#general, #random"
+					/>
+				</div>
+
+				<!-- Hidden fields for remote server defaults -->
+				<input type="hidden" name="host" :value="defaults.host || ''" />
+				<input type="hidden" name="name" :value="defaults.name || ''" />
+				<input type="hidden" name="port" :value="defaults.port || 6697" />
+				<input type="hidden" name="tls" :value="defaults.tls ? 'true' : 'false'" />
+				<input type="hidden" name="rejectUnauthorized" :value="defaults.rejectUnauthorized ? 'true' : 'false'" />
+				<input type="hidden" name="nick" :value="defaults.nick || ''" />
+				<input type="hidden" name="username" :value="defaults.username || ''" />
+				<input type="hidden" name="realname" :value="defaults.realname || ''" />
+				<input type="hidden" name="password" :value="defaults.password || ''" />
+				<input type="hidden" name="sasl" :value="defaults.sasl || ''" />
+				<input type="hidden" name="saslAccount" :value="defaults.saslAccount || ''" />
+				<input type="hidden" name="saslPassword" :value="defaults.saslPassword || ''" />
+				<input type="hidden" name="proxyEnabled" :value="defaults.proxyEnabled ? 'true' : 'false'" />
+			</template>
+
+			<!-- Editing existing network - show full form -->
+			<template v-else>
 				<h2>Network settings</h2>
 				<div class="connect-row">
 					<label for="connect:name">Name</label>
@@ -55,348 +98,69 @@
 						/>
 					</div>
 				</div>
-				<div class="connect-row">
-					<label for="connect:password">Password</label>
-					<RevealPassword
-						v-slot:default="slotProps"
-						class="input-wrap password-container"
-					>
-						<input
-							id="connect:password"
-							v-model="defaults.password"
-							class="input"
-							:type="slotProps.isVisible ? 'text' : 'password'"
-							placeholder="Server password (optional)"
-							name="password"
-							maxlength="300"
-						/>
-					</RevealPassword>
-				</div>
-				<div class="connect-row">
-					<label></label>
-					<div class="input-wrap">
-						<label class="tls">
-							<input
-								v-model="defaults.tls"
-								type="checkbox"
-								name="tls"
-								:disabled="defaults.hasSTSPolicy"
-							/>
-							Use secure connection (TLS)
-							<span
-								v-if="defaults.hasSTSPolicy"
-								class="tooltipped tooltipped-n tooltipped-no-delay"
-								aria-label="This network has a strict transport security policy, you will be unable to disable TLS"
-								>🔒 STS</span
-							>
-						</label>
-						<label class="tls">
-							<input
-								v-model="defaults.rejectUnauthorized"
-								type="checkbox"
-								name="rejectUnauthorized"
-							/>
-							Only allow trusted certificates
-						</label>
-					</div>
-				</div>
 
-				<h2>Proxy Settings</h2>
+				<h2>User preferences</h2>
 				<div class="connect-row">
-					<label></label>
-					<div class="input-wrap">
-						<label for="connect:proxyEnabled">
-							<input
-								id="connect:proxyEnabled"
-								v-model="defaults.proxyEnabled"
-								type="checkbox"
-								name="proxyEnabled"
-							/>
-							Enable Proxy
-						</label>
-					</div>
+					<label for="connect:nick">Nick</label>
+					<input
+						id="connect:nick"
+						v-model="defaults.nick"
+						class="input nick"
+						name="nick"
+						pattern="[^\s:!@]+"
+						maxlength="100"
+						required
+						@input="onNickChanged"
+					/>
 				</div>
-				<template v-if="defaults.proxyEnabled">
+				<template v-if="!config?.useHexIp">
 					<div class="connect-row">
-						<label for="connect:proxyHost">SOCKS Address</label>
-						<div class="input-wrap">
-							<input
-								id="connect:proxyHost"
-								v-model.trim="defaults.proxyHost"
-								class="input"
-								name="proxyHost"
-								aria-label="Proxy host"
-								maxlength="255"
-							/>
-							<span id="connect:proxyPortSeparator">:</span>
-							<input
-								id="connect:proxyPort"
-								v-model="defaults.proxyPort"
-								class="input"
-								type="number"
-								min="1"
-								max="65535"
-								name="proxyPort"
-								aria-label="SOCKS port"
-							/>
-						</div>
-					</div>
-
-					<div class="connect-row">
-						<label for="connect:proxyUsername">Proxy username</label>
+						<label for="connect:username">Username</label>
 						<input
-							id="connect:proxyUsername"
-							ref="proxyUsernameInput"
-							v-model.trim="defaults.proxyUsername"
+							id="connect:username"
+							ref="usernameInput"
+							v-model.trim="defaults.username"
 							class="input username"
-							name="proxyUsername"
+							name="username"
 							maxlength="100"
-							placeholder="Proxy username"
 						/>
-					</div>
-
-					<div class="connect-row">
-						<label for="connect:proxyPassword">Proxy password</label>
-						<RevealPassword
-							v-slot:default="slotProps"
-							class="input-wrap password-container"
-						>
-							<input
-								id="connect:proxyPassword"
-								ref="proxyPassword"
-								v-model="defaults.proxyPassword"
-								class="input"
-								:type="slotProps.isVisible ? 'text' : 'password'"
-								placeholder="Proxy password"
-								name="proxyPassword"
-								maxlength="300"
-							/>
-						</RevealPassword>
 					</div>
 				</template>
-			</template>
-			<template v-else-if="config.lockNetwork && !store.state.serverConfiguration?.public">
-				<h2>Network settings</h2>
 				<div class="connect-row">
-					<label for="connect:name">Name</label>
+					<label for="connect:realname">Real name</label>
 					<input
-						id="connect:name"
-						v-model.trim="defaults.name"
+						id="connect:realname"
+						v-model.trim="defaults.realname"
 						class="input"
-						name="name"
-						maxlength="100"
+						name="realname"
+						maxlength="300"
 					/>
 				</div>
-				<div class="connect-row">
-					<label for="connect:password">Password</label>
-					<RevealPassword
-						v-slot:default="slotProps"
-						class="input-wrap password-container"
-					>
-						<input
-							id="connect:password"
-							v-model="defaults.password"
-							class="input"
-							:type="slotProps.isVisible ? 'text' : 'password'"
-							placeholder="Server password (optional)"
-							name="password"
-							maxlength="300"
-						/>
-					</RevealPassword>
-				</div>
-			</template>
 
-			<h2>User preferences</h2>
-			<div class="connect-row">
-				<label for="connect:nick">Nick</label>
-				<input
-					id="connect:nick"
-					v-model="defaults.nick"
-					class="input nick"
-					name="nick"
-					pattern="[^\s:!@]+"
-					maxlength="100"
-					required
-					@input="onNickChanged"
-				/>
-			</div>
-			<template v-if="!config?.useHexIp">
-				<div class="connect-row">
-					<label for="connect:username">Username</label>
-					<input
-						id="connect:username"
-						ref="usernameInput"
-						v-model.trim="defaults.username"
-						class="input username"
-						name="username"
-						maxlength="100"
-					/>
-				</div>
-			</template>
-			<div class="connect-row">
-				<label for="connect:realname">Real name</label>
-				<input
-					id="connect:realname"
-					v-model.trim="defaults.realname"
-					class="input"
-					name="realname"
-					maxlength="300"
-				/>
-			</div>
-			<div class="connect-row">
-				<label for="connect:leaveMessage">Leave message</label>
-				<input
-					id="connect:leaveMessage"
-					v-model.trim="defaults.leaveMessage"
-					autocomplete="off"
-					class="input"
-					name="leaveMessage"
-					placeholder="The Lounge - https://thelounge.chat"
-				/>
-			</div>
-			<template v-if="defaults.uuid && !store.state.serverConfiguration?.public">
-				<div class="connect-row">
-					<label for="connect:commands">
-						Commands
-						<span
-							class="tooltipped tooltipped-ne tooltipped-no-delay"
-							aria-label="One /command per line.
+				<template v-if="defaults.uuid && !store.state.serverConfiguration?.public">
+					<div class="connect-row">
+						<label for="connect:commands">
+							Commands
+							<span
+								class="tooltipped tooltipped-ne tooltipped-no-delay"
+								aria-label="One /command per line.
 Each command will be executed in
 the server tab on new connection"
-						>
-							<button class="extra-help" />
-						</span>
-					</label>
-					<textarea
-						id="connect:commands"
-						ref="commandsInput"
-						autocomplete="off"
-						:value="defaults.commands ? defaults.commands.join('\n') : ''"
-						class="input"
-						name="commands"
-						@input="resizeCommandsInput"
-					/>
-				</div>
-			</template>
-			<template v-else-if="!defaults.uuid">
-				<div class="connect-row">
-					<label for="connect:channels">Channels</label>
-					<input
-						id="connect:channels"
-						v-model.trim="defaults.join"
-						class="input"
-						name="join"
-					/>
-				</div>
-			</template>
-
-			<template v-if="store.state.serverConfiguration?.public">
-				<template v-if="config?.lockNetwork">
-					<div class="connect-row">
-						<label></label>
-						<div class="input-wrap">
-							<label class="tls">
-								<input v-model="displayPasswordField" type="checkbox" />
-								I have a password
-							</label>
-						</div>
-					</div>
-					<div v-if="displayPasswordField" class="connect-row">
-						<label for="connect:password">Password</label>
-						<RevealPassword
-							v-slot:default="slotProps"
-							class="input-wrap password-container"
-						>
-							<input
-								id="connect:password"
-								ref="publicPassword"
-								v-model="defaults.password"
-								class="input"
-								:type="slotProps.isVisible ? 'text' : 'password'"
-								placeholder="Server password (optional)"
-								name="password"
-								maxlength="300"
-							/>
-						</RevealPassword>
-					</div>
-				</template>
-			</template>
-			<template v-else>
-				<h2 id="label-auth">Authentication</h2>
-				<div class="connect-row connect-auth" role="group" aria-labelledby="label-auth">
-					<label class="opt">
-						<input
-							:checked="!defaults.sasl"
-							type="radio"
-							name="sasl"
-							value=""
-							@change="setSaslAuth('')"
-						/>
-						No authentication
-					</label>
-					<label class="opt">
-						<input
-							:checked="defaults.sasl === 'plain'"
-							type="radio"
-							name="sasl"
-							value="plain"
-							@change="setSaslAuth('plain')"
-						/>
-						Username + password (SASL PLAIN)
-					</label>
-					<label
-						v-if="!store.state.serverConfiguration?.public && defaults.tls"
-						class="opt"
-					>
-						<input
-							:checked="defaults.sasl === 'external'"
-							type="radio"
-							name="sasl"
-							value="external"
-							@change="setSaslAuth('external')"
-						/>
-						Client certificate (SASL EXTERNAL)
-					</label>
-				</div>
-
-				<template v-if="defaults.sasl === 'plain'">
-					<div class="connect-row">
-						<label for="connect:username">Account</label>
-						<input
-							id="connect:saslAccount"
-							v-model.trim="defaults.saslAccount"
+							>
+								<button class="extra-help" />
+							</span>
+						</label>
+						<textarea
+							id="connect:commands"
+							ref="commandsInput"
+							autocomplete="off"
+							:value="defaults.commands ? defaults.commands.join('\n') : ''"
 							class="input"
-							name="saslAccount"
-							maxlength="100"
-							required
+							name="commands"
+							@input="resizeCommandsInput"
 						/>
 					</div>
-					<div class="connect-row">
-						<label for="connect:password">Password</label>
-						<RevealPassword
-							v-slot:default="slotProps"
-							class="input-wrap password-container"
-						>
-							<input
-								id="connect:saslPassword"
-								v-model="defaults.saslPassword"
-								class="input"
-								:type="slotProps.isVisible ? 'text' : 'password'"
-								name="saslPassword"
-								maxlength="300"
-								required
-							/>
-						</RevealPassword>
-					</div>
 				</template>
-				<div v-else-if="defaults.sasl === 'external'" class="connect-sasl-external">
-					<p>The Lounge automatically generates and manages the client certificate.</p>
-					<p>
-						On the IRC server, you will need to tell the services to attach the
-						certificate fingerprint (certfp) to your account, for example:
-					</p>
-					<pre><code>/msg NickServ CERT ADD</code></pre>
-				</div>
 			</template>
 
 			<div>
@@ -470,6 +234,91 @@ export default defineComponent({
 		const config = ref(store.state.serverConfiguration);
 		const previousUsername = ref(props.defaults?.username);
 		const displayPasswordField = ref(false);
+
+		// ZUBR-WEB: Remote domain handling
+		const remoteDomain = ref("");
+
+		// Get home network
+		const getHomeNetwork = () => {
+			return store.state.networks.find(
+				(n) => n.host === "127.0.0.1" || n.host === "localhost"
+			);
+		};
+
+		// Get current username from the home network
+		const getCurrentUsername = () => {
+			const homeNetwork = getHomeNetwork();
+			return homeNetwork?.nick || "user";
+		};
+
+		// Get the home instance domain from the home network name
+		const getHomeDomain = () => {
+			const homeNetwork = getHomeNetwork();
+			// Use the network name as the domain (set by IRC server)
+			// Fallback to hostname if not available
+			return homeNetwork?.name || window.location.hostname;
+		};
+
+		const onDomainChanged = () => {
+			if (!remoteDomain.value) {
+				return;
+			}
+
+			const domain = remoteDomain.value.trim();
+			const currentUsername = getCurrentUsername();
+			const homeDomain = getHomeDomain();
+
+			console.log("ZUBR-WEB: Remote domain:", domain);
+			console.log("ZUBR-WEB: Home domain:", homeDomain);
+			console.log("ZUBR-WEB: Current username:", currentUsername);
+
+			// Apply remote server defaults
+			props.defaults.host = domain;
+			props.defaults.name = domain;
+			props.defaults.port = 6697; // Secure port
+			props.defaults.tls = true;
+			props.defaults.rejectUnauthorized = true;
+			props.defaults.password = "";
+
+			// ZUBR-WEB: Federation identity
+			// Uses home instance domain to identify where the user is from
+			// NICK: Periods replaced with hyphens (IRC restriction)
+			// USER: Underscore separator, dots allowed
+			// REAL: At symbol separator, all characters allowed
+			const domainSafe = homeDomain.replace(/\./g, "-");
+			const federatedNick = `${currentUsername}_${domainSafe}`;
+			const federatedUser = `${currentUsername}_${homeDomain}`;
+			const federatedReal = `${currentUsername}@${homeDomain}`;
+
+			props.defaults.nick = federatedNick;
+			props.defaults.username = federatedUser;
+			props.defaults.realname = federatedReal;
+
+			// SASL disabled
+			props.defaults.sasl = "";
+			props.defaults.saslAccount = "";
+			props.defaults.saslPassword = "";
+
+			// Proxy disabled
+			props.defaults.proxyEnabled = false;
+			props.defaults.proxyHost = "";
+			props.defaults.proxyPort = 1080;
+			props.defaults.proxyUsername = "";
+			props.defaults.proxyPassword = "";
+
+			// Other defaults
+			props.defaults.commands = [];
+			props.defaults.ignoreList = [];
+			props.defaults.leaveMessage = "";
+
+			console.log("ZUBR-WEB: Defaults set:", {
+				host: props.defaults.host,
+				name: props.defaults.name,
+				port: props.defaults.port,
+				nick: props.defaults.nick,
+				tls: props.defaults.tls,
+			});
+		};
 
 		const publicPassword = ref<HTMLInputElement | null>(null);
 
@@ -552,6 +401,25 @@ export default defineComponent({
 				data[key] = value;
 			});
 
+			// ZUBR-WEB: Convert string values to proper types
+			if (data.port) {
+				data.port = parseInt(data.port as string, 10);
+			}
+			if (data.tls !== undefined) {
+				data.tls = data.tls === "true";
+			}
+			if (data.rejectUnauthorized !== undefined) {
+				data.rejectUnauthorized = data.rejectUnauthorized === "true";
+			}
+			if (data.proxyEnabled !== undefined) {
+				data.proxyEnabled = data.proxyEnabled === "true";
+			}
+			if (data.proxyPort) {
+				data.proxyPort = parseInt(data.proxyPort as string, 10);
+			}
+
+			console.log("ZUBR-WEB: Form submitted with data:", data);
+
 			props.handleSubmit(data as ClientNetwork);
 		};
 
@@ -566,6 +434,8 @@ export default defineComponent({
 			usernameInput,
 			onNickChanged,
 			onSubmit,
+			remoteDomain, // ZUBR-WEB
+			onDomainChanged, // ZUBR-WEB
 		};
 	},
 });

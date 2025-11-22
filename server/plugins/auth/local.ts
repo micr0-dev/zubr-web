@@ -3,7 +3,18 @@ import log from "../../log";
 import Helper from "../../helper";
 import type {AuthHandler} from "../auth";
 
+// ZUBR-WEB: Local auth disabled - using zubr-server API for authentication
 const localAuth: AuthHandler = (_manager, client, user, password, callback) => {
+	// Local authentication is disabled in zubr-web
+	// All authentication is handled by zubr-server API
+	log.warn(
+		`Local auth attempted for user ${colors.bold(
+			user
+		)} but local auth is disabled in zubr-web`
+	);
+	return callback(false);
+
+	/* ORIGINAL LOCAL AUTH CODE - COMMENTED OUT FOR ZUBR-WEB
 	// If no user is found, or if the client has not provided a password,
 	// fail the authentication straight away
 	if (!client || !password) {
@@ -42,10 +53,11 @@ const localAuth: AuthHandler = (_manager, client, user, password, callback) => {
 		.catch((error) => {
 			log.error(`Error while checking users password. Error: ${error}`);
 		});
+	*/
 };
 
 export default {
 	moduleName: "local",
 	auth: localAuth,
-	isEnabled: () => true,
+	isEnabled: () => false, // ZUBR-WEB: Disabled local auth
 };

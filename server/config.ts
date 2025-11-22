@@ -83,6 +83,22 @@ type StoragePolicy = {
 	deletionPolicy: "statusOnly" | "everything";
 };
 
+// ZUBR-WEB: Type definitions for zubr-server and home server configuration
+type ZubrServer = {
+	enabled: boolean;
+	url: string;
+};
+
+type HomeServer = {
+	enabled: boolean;
+	name: string;
+	host: string;
+	port: number;
+	tls: boolean;
+	rejectUnauthorized: boolean;
+	channels: string[];
+};
+
 export type ConfigType = {
 	public: boolean;
 	selfRegister: boolean;
@@ -102,8 +118,10 @@ export type ConfigType = {
 	fileUpload: FileUpload;
 	transports: string[];
 	leaveMessage: string;
-	defaults: Defaults;
+	defaults: Defaults; // ZUBR-WEB: Minimal defaults for compatibility - settings fetched dynamically
 	lockNetwork: boolean;
+	zubrServer: ZubrServer; // ZUBR-WEB: zubr-server API configuration
+	homeServer: HomeServer; // ZUBR-WEB: home IRC server configuration
 	messageStorage: string[];
 	storagePolicy: StoragePolicy;
 	useHexIp: boolean;

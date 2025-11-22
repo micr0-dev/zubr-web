@@ -506,6 +506,7 @@ class Network {
 			uuid: this.uuid,
 			name: this.name,
 			nick: this.nick,
+			host: this.host, // ZUBR-WEB: Include host for home server detection
 			serverOptions: this.serverOptions,
 			status: this.getNetworkStatus(),
 			channels: this.channels.map((channel) =>

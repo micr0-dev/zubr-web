@@ -65,6 +65,7 @@ type ClientPushSubscription = {
 export type UserConfig = {
 	log: boolean;
 	password: string;
+	zubrToken?: string; // ZUBR-WEB: JWT token from zubr-server
 	sessions: {
 		[token: string]: {
 			lastUse: number;

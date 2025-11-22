@@ -63,14 +63,22 @@ export function generateChannelContextMenu(
 
 	// Add menu items for lobbies
 	if (channel.type === ChanType.LOBBY) {
-		items = [
-			...items,
-			{
+		// ZUBR-WEB: Check if this is the home server
+		const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+
+		const lobbyItems: ContextMenuItem[] = [];
+
+		// ZUBR-WEB: Don't show "Edit this network" for home server
+		if (!isHomeServer) {
+			lobbyItems.push({
 				label: "Edit this network…",
 				type: "item",
 				class: "edit",
 				link: `/edit-network/${network.uuid}`,
-			},
+			});
+		}
+
+		lobbyItems.push(
 			{
 				label: "Join a channel…",
 				type: "item",
@@ -96,29 +104,37 @@ export function generateChannelContextMenu(
 						target: channel.id,
 						text: "/ignorelist",
 					}),
-			},
-			network.status.connected
-				? {
-						label: "Disconnect",
-						type: "item",
-						class: "disconnect",
-						action: () =>
-							socket.emit("input", {
-								target: channel.id,
-								text: "/disconnect",
-							}),
-				  }
-				: {
-						label: "Connect",
-						type: "item",
-						class: "connect",
-						action: () =>
-							socket.emit("input", {
-								target: channel.id,
-								text: "/connect",
-							}),
-				  },
-		];
+			}
+		);
+
+		// ZUBR-WEB: Don't show "Disconnect" for home server
+		if (!isHomeServer) {
+			lobbyItems.push(
+				network.status.connected
+					? {
+							label: "Disconnect",
+							type: "item",
+							class: "disconnect",
+							action: () =>
+								socket.emit("input", {
+									target: channel.id,
+									text: "/disconnect",
+								}),
+					  }
+					: {
+							label: "Connect",
+							type: "item",
+							class: "connect",
+							action: () =>
+								socket.emit("input", {
+									target: channel.id,
+									text: "/connect",
+								}),
+					  }
+			);
+		}
+
+		items = [...items, ...lobbyItems];
 	}
 
 	// Add menu items for channels
@@ -227,14 +243,20 @@ export function generateChannelContextMenu(
 	}
 
 	// Add close menu item
-	items.push({
-		label: closeMap[channel.type],
-		type: "item",
-		class: "close",
-		action() {
-			closeChannel();
-		},
-	});
+	// ZUBR-WEB: Don't show "Remove" for home server lobby
+	const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+	const isHomeServerLobby = channel.type === ChanType.LOBBY && isHomeServer;
+
+	if (!isHomeServerLobby) {
+		items.push({
+			label: closeMap[channel.type],
+			type: "item",
+			class: "close",
+			action() {
+				closeChannel();
+			},
+		});
+	}
 
 	return items;
 }

@@ -1072,7 +1072,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 	});
 }
 
-function performRegistration(this: Socket, data: AuthRegisterData) {
+async function performRegistration(this: Socket, data: AuthRegisterData) {
 	const socket = this;
 
 	// Self-registration must be enabled
@@ -1127,33 +1127,37 @@ function performRegistration(this: Socket, data: AuthRegisterData) {
 		return;
 	}
 
-	// Check if user already exists
-	if (manager!.findClient(cleanUsername)) {
-		socket.emit("auth:register:failed", {error: "Username already exists."});
-		return;
-	}
-
-	// Create the user
-	const hashedPassword = Helper.password.hash(password);
+	// ZUBR-WEB: Register user with zubr-server API (stateless mode - no local files)
+	const zubrClient = require("./api/zubr-client").default;
 
 	try {
-		const success = manager!.addUser(cleanUsername, hashedPassword, true);
+		const response = await zubrClient.signup(cleanUsername, password);
 
-		if (!success) {
-			socket.emit("auth:register:failed", {error: "Failed to create user."});
+		if (!response.success) {
+			log.warn(
+				`Registration failed for user ${colors.bold(cleanUsername)}: ${
+					response.error || "Unknown error"
+				}`
+			);
+			socket.emit("auth:register:failed", {
+				error: response.error || "Failed to create user.",
+			});
 			return;
 		}
+
+		// ZUBR-WEB: Stateless mode - no local file creation needed
+		// User will be created in-memory on first login
+		log.info(
+			`User ${colors.bold(cleanUsername)} registered via zubr-server from ${colors.bold(
+				getClientIp(socket)
+			)}`
+		);
+
+		socket.emit("auth:register:success");
 	} catch (e: any) {
 		log.error(`Registration failed for user ${colors.bold(cleanUsername)}: ${e.message}`);
 		socket.emit("auth:register:failed", {error: "Failed to create user."});
-		return;
 	}
-
-	log.info(
-		`User ${colors.bold(cleanUsername)} registered from ${colors.bold(getClientIp(socket))}`
-	);
-
-	socket.emit("auth:register:success");
 }
 
 function reverseDnsLookup(ip: string, callback: (hostname: string) => void) {
