@@ -24,6 +24,7 @@ export type SharedServerOptions = {
 export type SharedNetworkStatus = {
 	connected: boolean;
 	secure: boolean;
+	serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
 };
 
 export type SharedNetwork = {
@@ -34,4 +35,5 @@ export type SharedNetwork = {
 	serverOptions: SharedServerOptions;
 	status: SharedNetworkStatus;
 	channels: SharedNetworkChan[];
+	serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
 };

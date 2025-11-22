@@ -18,9 +18,18 @@
 			>
 				<div class="header">
 					<SidebarToggle />
-					<span class="title" :aria-label="'Currently open ' + channel.type">{{
-						channel.name
-					}}</span>
+					<span class="title" :aria-label="'Currently open ' + channel.type">
+						<span class="breadcrumb-network">{{ network.name }}</span>
+						<span
+							v-if="network.status.serverType"
+							:class="['server-type-tag', network.status.serverType]"
+							:title="network.status.serverType === 'zubr' ? 'Zubr Server' : 'IRC Server'"
+						>
+							[{{ network.status.serverType.toUpperCase() }}]
+						</span>
+						<span v-if="channel.type !== 'lobby'" class="breadcrumb-separator"> &gt; </span>
+						<span v-if="channel.type !== 'lobby'" class="breadcrumb-channel">{{ channel.name }}</span>
+					</span>
 					<div v-if="channel.editTopic === true" class="topic-container">
 						<input
 							ref="topicInput"
@@ -64,6 +73,17 @@
 						@click="openContextMenu"
 					/>
 					<span
+						v-if="channel.type === 'lobby' && network.status.serverType === 'zubr'"
+						class="health-tooltip tooltipped tooltipped-w"
+						aria-label="Toggle health sidebar"
+					>
+						<button
+							class="health-toggle"
+							aria-label="Toggle health sidebar"
+							@click="store.commit('toggleHealthSidebar')"
+						/>
+					</span>
+					<span
 						v-if="channel.type === 'channel'"
 						class="rt-tooltip tooltipped tooltipped-w"
 						aria-label="Toggle user list"
@@ -100,6 +120,14 @@
 						<div class="scroll-down-arrow" />
 					</div>
 					<ChatUserList v-if="channel.type === 'channel'" :channel="channel" />
+					<ZubrHealthSidebar
+						v-if="
+							channel.type === 'lobby' &&
+							network.status.serverType === 'zubr' &&
+							store.state.healthSidebarOpen
+						"
+						:network="network"
+					/>
 					<MessageList
 						ref="messageList"
 						:network="network"
@@ -127,6 +155,7 @@ import ParsedMessage from "./ParsedMessage.vue";
 import MessageList from "./MessageList.vue";
 import ChatInput from "./ChatInput.vue";
 import ChatUserList from "./ChatUserList.vue";
+import ZubrHealthSidebar from "./ZubrHealthSidebar.vue";
 import SidebarToggle from "./SidebarToggle.vue";
 import MessageSearchForm from "./MessageSearchForm.vue";
 import ListBans from "./Special/ListBans.vue";
@@ -145,6 +174,7 @@ export default defineComponent({
 		MessageList,
 		ChatInput,
 		ChatUserList,
+		ZubrHealthSidebar,
 		SidebarToggle,
 		MessageSearchForm,
 	},

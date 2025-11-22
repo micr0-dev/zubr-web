@@ -123,6 +123,7 @@ class Network {
 	keepNick!: string | null;
 
 	status!: NetworkStatus;
+	serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
 
 	serverOptions!: {
 		CHANTYPES: string[];
@@ -519,6 +520,7 @@ class Network {
 		const status = {
 			connected: false,
 			secure: false,
+			serverType: this.serverType, // ZUBR-WEB: Include server type
 		};
 
 		if (this.irc && this.irc.connection && this.irc.connection.transport) {

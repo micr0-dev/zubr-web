@@ -37,6 +37,11 @@ socket.on("network:status", function (data) {
 	network.status.connected = data.connected;
 	network.status.secure = data.secure;
 
+	// ZUBR-WEB: Update server type
+	if (data.serverType) {
+		network.status.serverType = data.serverType;
+	}
+
 	if (!data.connected) {
 		network.channels.forEach((channel) => {
 			channel.users = []; // TODO: untangle this

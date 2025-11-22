@@ -291,6 +291,7 @@ p {
 #chat button.mentions::before,
 #chat button.close::before,
 #chat button.menu::before,
+#chat button.health-toggle::before,
 #chat button.search::before,
 .channel-list-item::before,
 #footer .icon,
@@ -356,6 +357,7 @@ p {
 #viewport .rt::before { content: "\f0c0"; /* https://fontawesome.com/icons/users?style=solid */ }
 #chat button.menu::before { content: "\f142"; /* http://fontawesome.io/icon/ellipsis-v/ */ }
 #chat button.mentions::before { content: "\f1fa"; /* https://fontawesome.com/icons/at?style=solid */ }
+#chat button.health-toggle::before { content: "\f0fa"; /* https://fontawesome.com/icons/medkit?style=solid */ } /* ZUBR-WEB */
 #chat button.search::before { content: "\f002"; /* https://fontawesome.com/icons/search?style=solid */ }
 #chat button.close::before { content: "\f00d"; /* https://fontawesome.com/icons/times?style=solid */ }
 
@@ -623,6 +625,7 @@ p {
 #chat button.mentions,
 #chat button.search,
 #chat button.menu,
+#chat button.health-toggle,
 #chat button.close {
 	color: #607992;
 	display: flex;
@@ -638,6 +641,7 @@ p {
 #chat button.mentions::before,
 #chat button.search::before,
 #chat button.menu::before,
+#chat button.health-toggle::before,
 #chat button.close::before {
 	width: 36px;
 	line-height: 36px; /* Fix alignment in Microsoft Edge */
@@ -1097,6 +1101,37 @@ textarea.input {
 	white-space: nowrap;
 	overflow: hidden;
 	text-overflow: ellipsis;
+	display: flex;
+	align-items: center;
+	gap: 4px;
+}
+
+/* ZUBR-WEB: Breadcrumb styling in header */
+.header .title .breadcrumb-network {
+	font-weight: 600;
+}
+
+.header .title .breadcrumb-separator {
+	color: var(--body-color-muted);
+	margin: 0 2px;
+}
+
+.header .title .breadcrumb-channel {
+	color: var(--body-color);
+}
+
+.header .title .server-type-tag {
+	font-size: 11px;
+	font-weight: 600;
+	margin: 0 2px;
+}
+
+.header .title .server-type-tag.zubr {
+	color: #4a90e2;
+}
+
+.header .title .server-type-tag.irc {
+	color: #999;
 }
 
 .topic-container {
@@ -1311,6 +1346,11 @@ textarea.input {
 
 .userlist-open .chat-view[data-type="channel"] .scroll-down {
 	right: 196px;
+}
+
+/* ZUBR-WEB: Offset scroll-down button when health sidebar is open */
+.health-sidebar-open .chat-view[data-type="lobby"] .scroll-down {
+	right: 210px;
 }
 
 #chat .messages {

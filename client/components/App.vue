@@ -73,6 +73,7 @@ export default defineComponent({
 				"menu-open": store.state.appLoaded && store.state.sidebarOpen,
 				"menu-dragging": store.state.sidebarDragging,
 				"userlist-open": store.state.userlistOpen,
+				"health-sidebar-open": store.state.healthSidebarOpen, // ZUBR-WEB
 			};
 		});
 

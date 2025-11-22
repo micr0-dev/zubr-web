@@ -49,6 +49,9 @@ export default <IrcEventHandler>function (irc, network) {
 			log.info(
 				`Updated network name to "${serverNetworkName}" from IRC server for ${client.name}`
 			);
+
+			// ZUBR-WEB: Re-detect server type now that we have the actual domain
+			detectServerType(network, client);
 		}
 
 		if (network.irc.network.cap.enabled.length > 0) {
@@ -107,6 +110,9 @@ export default <IrcEventHandler>function (irc, network) {
 			}),
 			true
 		);
+
+		// ZUBR-WEB: Detect server type (Zubr vs IRC)
+		detectServerType(network, client);
 
 		sendStatus();
 	});
@@ -247,6 +253,90 @@ export default <IrcEventHandler>function (irc, network) {
 			serverOptions: network.serverOptions,
 		});
 	});
+
+	// ZUBR-WEB: Detect if server is Zubr or IRC
+	async function detectServerType(network: any, client: any) {
+		const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+
+		try {
+			const http = require("http");
+			const https = require("https");
+			const {URL} = require("url");
+
+			let urlsToCheck: string[] = [];
+
+			if (isHomeServer) {
+				// For home server, check the zubr-server API URL
+				const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+				urlsToCheck = [`${zubrServerUrl}/api/info`];
+			} else {
+				// For remote servers, try HTTPS:443 then HTTP:80
+				urlsToCheck = [
+					`https://${network.host}:443/api/info`,
+					`http://${network.host}:80/api/info`,
+				];
+			}
+
+			for (const urlString of urlsToCheck) {
+				try {
+					const url = new URL(urlString);
+					const module = url.protocol === "https:" ? https : http;
+
+					const response = await new Promise<any>((resolve, reject) => {
+						const req = module.get(
+							urlString,
+							{
+								timeout: 5000,
+								rejectUnauthorized: false, // Allow self-signed certs
+							},
+							(res: any) => {
+								let data = "";
+								res.on("data", (chunk: any) => (data += chunk));
+								res.on("end", () => {
+									try {
+										resolve(JSON.parse(data));
+									} catch (e) {
+										reject(e);
+									}
+								});
+							}
+						);
+
+						req.on("error", reject);
+						req.on("timeout", () => {
+							req.destroy();
+							reject(new Error("Timeout"));
+						});
+					});
+
+					// If we got a response with "Zubr" in the name, it's Zubr
+					if (response && response.name && response.name.includes("Zubr")) {
+						network.serverType = "zubr";
+						log.info(
+							`Detected ${network.name || network.host} as Zubr server (${response.version})`
+						);
+						sendStatus(); // Update client with new server type
+						return;
+					}
+				} catch (e) {
+					// Try next URL
+					continue;
+				}
+			}
+
+			// If no Zubr API responded, it's IRC
+			network.serverType = "irc";
+			log.info(`Detected ${network.name || network.host} as IRC server (no Zubr API response)`);
+			sendStatus(); // Update client with new server type
+		} catch (error) {
+			// On any error, assume IRC
+			network.serverType = "irc";
+			log.debug(
+				`Server type detection failed for ${network.name || network.host}, assuming IRC:`,
+				String(error)
+			);
+		}
+	}
 
 	function sendStatus() {
 		const status = network.getNetworkStatus();

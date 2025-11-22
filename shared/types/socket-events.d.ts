@@ -57,7 +57,12 @@ interface ServerToClientEvents {
 
 	network: EventHandler<{network: SharedNetwork}>;
 	"network:options": EventHandler<{network: string; serverOptions: SharedServerOptions}>;
-	"network:status": EventHandler<{network: string; connected: boolean; secure: boolean}>;
+	"network:status": EventHandler<{
+		network: string;
+		connected: boolean;
+		secure: boolean;
+		serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
+	}>;
 	"network:info": EventHandler<{uuid: string}>;
 	"network:name": EventHandler<{uuid: string; name: string}>;
 

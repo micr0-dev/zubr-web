@@ -131,6 +131,61 @@ export default async function (
 		return res.sendFile(path.join(packagePath, fileName));
 	});
 
+	// ZUBR-WEB: Health API endpoint
+	app.get("/api/zubr-health/:networkId", async (req, res) => {
+		try {
+			const networkId = req.params.networkId;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			// Only allow for Zubr servers
+			if (network.serverType !== "zubr") {
+				return res.status(400).json({error: "Network is not a Zubr server"});
+			}
+
+			// Check if this is the home server
+			const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+
+			if (!isHomeServer) {
+				return res
+					.status(400)
+					.json({error: "Health endpoint only available for home server"});
+			}
+
+			// Fetch health from zubr-server
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+
+			const response = await fetch(`${zubrServerUrl}/api/health`);
+
+			if (!response.ok) {
+				throw new Error(`Health check failed: ${response.statusText}`);
+			}
+
+			const healthData = await response.json();
+			return res.json(healthData);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to fetch health data:", errorMessage);
+			return res.status(500).json({error: "Failed to fetch health data"});
+		}
+	});
+
 	if (Config.values.public && (Config.values.ldap || {}).enable) {
 		log.warn(
 			"Server is public and set to use LDAP. Set to private mode if trying to use LDAP authentication."

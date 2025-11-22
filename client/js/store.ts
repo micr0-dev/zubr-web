@@ -58,6 +58,7 @@ export type State = {
 	sidebarOpen: boolean;
 	sidebarDragging: boolean;
 	userlistOpen: boolean;
+	healthSidebarOpen: boolean; // ZUBR-WEB: Health sidebar toggle state
 	versionData:
 		| null
 		| undefined
@@ -101,6 +102,7 @@ const state = (): State => ({
 	sidebarOpen: false,
 	sidebarDragging: false,
 	userlistOpen: storage.get("thelounge.state.userlist") !== "false",
+	healthSidebarOpen: storage.get("thelounge.state.healthsidebar") !== "false", // ZUBR-WEB
 	versionData: null,
 	versionStatus: "loading",
 	versionDataExpired: false,
@@ -226,6 +228,8 @@ type Mutations = {
 	toggleSidebar(state: State): void;
 	toggleUserlist(state: State): void;
 	userlistOpen(state: State, payload: State["userlistOpen"]): void;
+	toggleHealthSidebar(state: State): void; // ZUBR-WEB
+	healthSidebarOpen(state: State, payload: State["healthSidebarOpen"]): void; // ZUBR-WEB
 	versionData(state: State, payload: State["versionData"]): void;
 	versionStatus(state: State, payload: State["versionStatus"]): void;
 	versionDataExpired(state: State, payload: State["versionDataExpired"]): void;
@@ -298,6 +302,14 @@ const mutations: Mutations = {
 	},
 	userlistOpen(state, payload) {
 		state.userlistOpen = payload;
+	},
+	// ZUBR-WEB: Toggle health sidebar
+	toggleHealthSidebar(state) {
+		state.healthSidebarOpen = !state.healthSidebarOpen;
+		storage.set("thelounge.state.healthsidebar", String(state.healthSidebarOpen));
+	},
+	healthSidebarOpen(state, payload) {
+		state.healthSidebarOpen = payload;
 	},
 	versionData(state, payload) {
 		state.versionData = payload;
