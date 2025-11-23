@@ -186,6 +186,9 @@ export default async function (
 		}
 	});
 
+	// ZUBR-WEB: Enable JSON body parsing for API routes
+	app.use(express.json());
+
 	// ZUBR-WEB: Users API endpoint
 	app.get("/api/zubr-users/:networkId", async (req, res) => {
 		try {
@@ -546,6 +549,154 @@ export default async function (
 			const errorMessage = error instanceof Error ? error.message : String(error);
 			log.error("Failed to delete user:", errorMessage);
 			return res.status(500).json({error: "Failed to delete user"});
+		}
+	});
+
+	// ZUBR-WEB: Get current user's info (including role)
+	app.get("/api/zubr-me/:networkId", async (req, res) => {
+		try {
+			const {networkId} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = `http://${network.host}:${network.port}`;
+			const response = await fetch(`${zubrServerUrl}/api/user/me`, {
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				return res.status(response.status).json({error: "Failed to fetch user info"});
+			}
+
+			const data = await response.json();
+			return res.json(data);
+		} catch (error) {
+			console.error("[ZUBR] Error fetching user info:", error);
+			return res.status(500).json({error: "Internal server error"});
+		}
+	});
+
+	// ZUBR-WEB: Instance Settings - Get settings
+	app.get("/api/zubr-instance/:networkId/settings", async (req, res) => {
+		try {
+			const {networkId} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/instance/settings`, {
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const settings = await response.json();
+			return res.json(settings);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to fetch instance settings:", errorMessage);
+			return res.status(500).json({error: "Failed to fetch instance settings"});
+		}
+	});
+
+	// ZUBR-WEB: Instance Settings - Update settings
+	app.patch("/api/zubr-instance/:networkId/settings", async (req, res) => {
+		try {
+			const {networkId} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/instance/settings`, {
+				method: "PATCH",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${jwtToken}`,
+				},
+				body: JSON.stringify(req.body),
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const settings = await response.json();
+			return res.json(settings);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to update instance settings:", errorMessage);
+			return res.status(500).json({error: "Failed to update instance settings"});
 		}
 	});
 

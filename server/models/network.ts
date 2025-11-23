@@ -124,6 +124,7 @@ class Network {
 
 	status!: NetworkStatus;
 	serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
+	zubrRole?: "owner" | "admin" | "user"; // ZUBR-WEB: User's role on Zubr server
 
 	serverOptions!: {
 		CHANTYPES: string[];
@@ -521,6 +522,7 @@ class Network {
 			connected: false,
 			secure: false,
 			serverType: this.serverType, // ZUBR-WEB: Include server type
+			zubrRole: this.zubrRole, // ZUBR-WEB: Include user's role
 		};
 
 		if (this.irc && this.irc.connection && this.irc.connection.transport) {

@@ -255,6 +255,51 @@ export default <IrcEventHandler>function (irc, network) {
 	});
 
 	// ZUBR-WEB: Detect if server is Zubr or IRC
+	async function fetchUserRole(network: any, client: any) {
+		try {
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				log.debug("No JWT token available to fetch user role");
+				return;
+			}
+
+			// ZUBR-WEB: Determine correct API URL
+			const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+			let zubrServerUrl: string;
+
+			if (isHomeServer) {
+				// For home server, use the zubr-server URL from config
+				zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			} else {
+				// For remote servers, try HTTPS:443 then HTTP:80
+				zubrServerUrl = `https://${network.host}:443`;
+			}
+
+			log.debug(`[ZUBR] Fetching user role from: ${zubrServerUrl}/api/user/me`);
+
+			const response = await fetch(`${zubrServerUrl}/api/user/me`, {
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				log.debug(`Failed to fetch user role: ${response.statusText}`);
+				return;
+			}
+
+			const data = (await response.json()) as any;
+			if (data.role) {
+				network.zubrRole = data.role;
+				log.info(
+					`Fetched user role for ${network.name || network.host}: ${data.role}`
+				);
+			}
+		} catch (error) {
+			log.debug(`Error fetching user role: ${error}`);
+		}
+	}
+
 	async function detectServerType(network: any, client: any) {
 		const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
 
@@ -315,6 +360,10 @@ export default <IrcEventHandler>function (irc, network) {
 						log.info(
 							`Detected ${network.name || network.host} as Zubr server (${response.version})`
 						);
+
+						// ZUBR-WEB: Fetch user's role
+						await fetchUserRole(network, client);
+
 						sendStatus(); // Update client with new server type
 						return;
 					}

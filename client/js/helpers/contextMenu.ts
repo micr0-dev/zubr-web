@@ -107,6 +107,26 @@ export function generateChannelContextMenu(
 			}
 		);
 
+		// ZUBR-WEB: Add Instance Settings for home server admins/owners
+		if (isHomeServer && network.status?.serverType === "zubr") {
+			// Check if the current user has admin/owner role from network status
+			const ourRole = (network.status as any).zubrRole;
+
+			if (ourRole === "owner" || ourRole === "admin") {
+				lobbyItems.push(
+					{
+						type: "divider",
+					},
+					{
+						label: "Instance Settings",
+						type: "item",
+						class: "settings",
+						link: `/instance-settings/${network.uuid}`,
+					}
+				);
+			}
+		}
+
 		// ZUBR-WEB: Don't show "Disconnect" for home server
 		if (!isHomeServer) {
 			lobbyItems.push(

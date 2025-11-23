@@ -9,6 +9,7 @@ import Help from "../components/Windows/Help.vue";
 import Changelog from "../components/Windows/Changelog.vue";
 import NetworkEdit from "../components/Windows/NetworkEdit.vue";
 import SearchResults from "../components/Windows/SearchResults.vue";
+import InstanceSettings from "../components/Windows/InstanceSettings.vue";
 import RoutedChat from "../components/RoutedChat.vue";
 import {store} from "./store";
 
@@ -98,6 +99,11 @@ const router = createRouter({
 			component: NetworkEdit,
 		},
 		{
+			name: "InstanceSettings",
+			path: "/instance-settings/:uuid",
+			component: InstanceSettings,
+		},
+		{
 			name: "RoutedChat",
 			path: "/chan-:id",
 			component: RoutedChat,
@@ -138,6 +144,11 @@ router.beforeEach((to, from) => {
 
 	// Disallow navigating to invalid networks
 	if (to.name === "NetworkEdit" && !store.getters.findNetwork(String(to.params.uuid))) {
+		return false;
+	}
+
+	// Disallow navigating to instance settings for invalid networks
+	if (to.name === "InstanceSettings" && !store.getters.findNetwork(String(to.params.uuid))) {
 		return false;
 	}
 
