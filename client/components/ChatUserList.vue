@@ -5,12 +5,23 @@
 		:aria-label="'User list for ' + channel.name"
 		@mouseleave="removeHoverUser"
 	>
-		<div class="count">
+		<div v-if="isZubrServer && !zubrUsersLoaded" class="count">
+			<input
+				ref="input"
+				:value="'Loading users...'"
+				type="search"
+				class="search"
+				aria-label="Loading users"
+				tabindex="-1"
+				disabled
+			/>
+		</div>
+		<div v-else class="count">
 			<input
 				ref="input"
 				:value="userSearchInput"
 				:placeholder="
-					channel.users.length + ' user' + (channel.users.length === 1 ? '' : 's')
+					displayUsers.length + ' user' + (displayUsers.length === 1 ? '' : 's')
 				"
 				type="search"
 				class="search"
@@ -58,9 +69,9 @@
 
 <script lang="ts">
 import {filter as fuzzyFilter} from "fuzzy";
-import {computed, defineComponent, nextTick, PropType, ref} from "vue";
+import {computed, defineComponent, nextTick, onMounted, onUnmounted, PropType, ref, watch} from "vue";
 import type {UserInMessage} from "../../shared/types/msg";
-import type {ClientChan, ClientUser} from "../js/types";
+import type {ClientChan, ClientNetwork, ClientUser} from "../js/types";
 import Username from "./Username.vue";
 
 const modes = {
@@ -73,6 +84,13 @@ const modes = {
 	"": "normal",
 };
 
+// ZUBR-WEB: Role to mode mapping for Zubr users
+const zubrRoleToMode = {
+	owner: "~",
+	admin: "&",
+	user: "",
+};
+
 export default defineComponent({
 	name: "ChatUserList",
 	components: {
@@ -80,21 +98,125 @@ export default defineComponent({
 	},
 	props: {
 		channel: {type: Object as PropType<ClientChan>, required: true},
+		network: {type: Object as PropType<ClientNetwork>, required: true},
 	},
 	setup(props) {
 		const userSearchInput = ref("");
 		const activeUser = ref<UserInMessage | null>();
 		const userlist = ref<HTMLDivElement>();
+		const zubrUsers = ref<ClientUser[]>([]);
+		const zubrUsersLoaded = ref(false);
+		const refreshInterval = ref<number | null>(null);
+
+		// ZUBR-WEB: Check if this is a Zubr server
+		const isZubrServer = computed(() => {
+			return props.network?.status?.serverType === "zubr";
+		});
+
+		// ZUBR-WEB: Use Zubr users or IRC users depending on server type
+		const displayUsers = computed(() => {
+			if (isZubrServer.value && zubrUsersLoaded.value) {
+				return zubrUsers.value;
+			}
+			return props.channel.users;
+		});
+
 		const filteredUsers = computed(() => {
 			if (!userSearchInput.value) {
 				return;
 			}
 
-			return fuzzyFilter(userSearchInput.value, props.channel.users, {
+			return fuzzyFilter(userSearchInput.value, displayUsers.value, {
 				pre: "<b>",
 				post: "</b>",
 				extract: (u) => u.nick,
 			});
+		});
+
+		// ZUBR-WEB: Fetch users from Zubr server
+		const fetchZubrUsers = async () => {
+			if (!isZubrServer.value) {
+				return;
+			}
+
+			try {
+				const response = await fetch(`/api/zubr-users/${props.network.uuid}`);
+
+				if (!response.ok) {
+					console.error("Failed to fetch Zubr users:", response.statusText);
+					return;
+				}
+
+				const data = await response.json();
+
+				// Transform Zubr users to match IRC user format
+				const transformedUsers = data.users.map((user: any) => ({
+					nick: user.username,
+					modes: [zubrRoleToMode[user.role as keyof typeof zubrRoleToMode] || ""],
+					lastMessage: 0,
+					// ZUBR-WEB: Add role for display purposes
+					zubrRole: user.role,
+				}));
+
+				zubrUsers.value = transformedUsers;
+
+				// ZUBR-WEB: Update channel.users with Zubr users so context menu can access them
+				props.channel.users = transformedUsers;
+
+				zubrUsersLoaded.value = true;
+			} catch (error) {
+				console.error("Error fetching Zubr users:", error);
+			}
+		};
+
+		// ZUBR-WEB: Listen for manual refresh events
+		const handleRefreshUsers = () => {
+			if (isZubrServer.value) {
+				void fetchZubrUsers();
+			}
+		};
+
+		// ZUBR-WEB: Fetch users on mount and refresh every 30 seconds
+		onMounted(() => {
+			if (isZubrServer.value) {
+				void fetchZubrUsers();
+				refreshInterval.value = window.setInterval(() => {
+					void fetchZubrUsers();
+				}, 30000);
+			}
+
+			// Listen for manual refresh requests
+			window.addEventListener("zubr:refresh-users", handleRefreshUsers);
+		});
+
+		// ZUBR-WEB: Watch for server type changes
+		watch(
+			() => props.network?.status?.serverType,
+			() => {
+				if (isZubrServer.value) {
+					void fetchZubrUsers();
+					if (!refreshInterval.value) {
+						refreshInterval.value = window.setInterval(() => {
+							void fetchZubrUsers();
+						}, 30000);
+					}
+				} else {
+					if (refreshInterval.value) {
+						clearInterval(refreshInterval.value);
+						refreshInterval.value = null;
+					}
+					zubrUsersLoaded.value = false;
+					zubrUsers.value = [];
+				}
+			}
+		);
+
+		// ZUBR-WEB: Clean up interval and event listener on unmount
+		onUnmounted(() => {
+			if (refreshInterval.value) {
+				clearInterval(refreshInterval.value);
+			}
+			window.removeEventListener("zubr:refresh-users", handleRefreshUsers);
 		});
 
 		const groupedUsers = computed(() => {
@@ -116,7 +238,8 @@ export default defineComponent({
 					groups[mode].push(user);
 				}
 			} else {
-				for (const user of props.channel.users) {
+				// ZUBR-WEB: Use displayUsers instead of props.channel.users
+				for (const user of displayUsers.value) {
 					const mode = user.modes[0] || "";
 
 					if (!groups[mode]) {
@@ -127,7 +250,34 @@ export default defineComponent({
 				}
 			}
 
-			return groups as {
+			// ZUBR-WEB: Sort groups by mode hierarchy for proper display order
+			// Order should be: ~ (owner), & (admin), @ (op), % (half-op), + (voice), "" (normal)
+			const modeOrder = ["~", "&", "@", "%", "+", ""];
+			const sortedGroups = {};
+
+			for (const mode of modeOrder) {
+				if (groups[mode]) {
+					// Sort users alphabetically within each group
+					sortedGroups[mode] = groups[mode].sort((a, b) => {
+						const nickA = (a.nick || (a as any).original?.nick || "").toLowerCase();
+						const nickB = (b.nick || (b as any).original?.nick || "").toLowerCase();
+						return nickA.localeCompare(nickB);
+					});
+				}
+			}
+
+			// Add any remaining modes not in the standard order
+			for (const mode in groups) {
+				if (!sortedGroups[mode]) {
+					sortedGroups[mode] = groups[mode].sort((a, b) => {
+						const nickA = (a.nick || (a as any).original?.nick || "").toLowerCase();
+						const nickB = (b.nick || (b as any).original?.nick || "").toLowerCase();
+						return nickA.localeCompare(nickB);
+					});
+				}
+			}
+
+			return sortedGroups as {
 				[mode: string]: (ClientUser & {
 					original: UserInMessage;
 					string: string;
@@ -189,7 +339,8 @@ export default defineComponent({
 			event.stopImmediatePropagation();
 			event.preventDefault();
 
-			let users = props.channel.users;
+			// ZUBR-WEB: Use displayUsers instead of props.channel.users
+			let users = displayUsers.value;
 
 			// Only using filteredUsers when we have to avoids filtering when it's not needed
 			if (userSearchInput.value && filteredUsers.value) {
@@ -242,6 +393,10 @@ export default defineComponent({
 			userSearchInput,
 			activeUser,
 			userlist,
+			// ZUBR-WEB: Add new computed properties
+			isZubrServer,
+			zubrUsersLoaded,
+			displayUsers,
 
 			setUserSearchInput,
 			getModeClass,

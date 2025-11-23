@@ -119,7 +119,11 @@
 					>
 						<div class="scroll-down-arrow" />
 					</div>
-					<ChatUserList v-if="channel.type === 'channel'" :channel="channel" />
+					<ChatUserList
+						v-if="channel.type === 'channel'"
+						:channel="channel"
+						:network="network"
+					/>
 					<ZubrHealthSidebar
 						v-if="
 							channel.type === 'lobby' &&

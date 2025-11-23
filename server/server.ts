@@ -186,6 +186,369 @@ export default async function (
 		}
 	});
 
+	// ZUBR-WEB: Users API endpoint
+	app.get("/api/zubr-users/:networkId", async (req, res) => {
+		try {
+			const networkId = req.params.networkId;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			// Only allow for Zubr servers
+			if (network.serverType !== "zubr") {
+				return res.status(400).json({error: "Network is not a Zubr server"});
+			}
+
+			// Check if this is the home server
+			const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
+
+			if (!isHomeServer) {
+				return res.status(400).json({error: "Users endpoint only available for home server"});
+			}
+
+			// ZUBR-WEB: Get the JWT token from client config
+			const jwtToken = client.config.zubrToken;
+
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			// Fetch users from zubr-server
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+
+			const response = await fetch(`${zubrServerUrl}/api/users`, {
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				throw new Error(`Failed to fetch users: ${response.statusText}`);
+			}
+
+			const usersData = await response.json();
+			return res.json(usersData);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to fetch users data:", errorMessage);
+			return res.status(500).json({error: "Failed to fetch users data"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Get user permissions
+	app.get("/api/zubr-admin/:networkId/users/:username/permissions", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}/permissions`, {
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const permissionsData = await response.json();
+			return res.json(permissionsData);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to fetch user permissions:", errorMessage);
+			return res.status(500).json({error: "Failed to fetch user permissions"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Promote user
+	app.post("/api/zubr-admin/:networkId/users/:username/promote", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}/promote`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const result = await response.json();
+			return res.json(result);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to promote user:", errorMessage);
+			return res.status(500).json({error: "Failed to promote user"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Demote user
+	app.post("/api/zubr-admin/:networkId/users/:username/demote", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}/demote`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const result = await response.json();
+			return res.json(result);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to demote user:", errorMessage);
+			return res.status(500).json({error: "Failed to demote user"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Ban user
+	app.post("/api/zubr-admin/:networkId/users/:username/ban", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}/ban`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const result = await response.json();
+			return res.json(result);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to ban user:", errorMessage);
+			return res.status(500).json({error: "Failed to ban user"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Kick user
+	app.post("/api/zubr-admin/:networkId/users/:username/kick", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}/kick`, {
+				method: "POST",
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const result = await response.json();
+			return res.json(result);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to kick user:", errorMessage);
+			return res.status(500).json({error: "Failed to kick user"});
+		}
+	});
+
+	// ZUBR-WEB: Admin - Delete user
+	app.delete("/api/zubr-admin/:networkId/users/:username", async (req, res) => {
+		try {
+			const {networkId, username} = req.params;
+
+			if (!manager) {
+				return res.status(500).json({error: "Manager not initialized"});
+			}
+
+			const client = manager.clients.find((c: any) =>
+				c.networks.some((n: any) => n.uuid === networkId)
+			);
+
+			if (!client) {
+				return res.status(404).json({error: "Network not found"});
+			}
+
+			const network = client.networks.find((n: any) => n.uuid === networkId);
+
+			if (!network || network.serverType !== "zubr") {
+				return res.status(400).json({error: "Invalid Zubr network"});
+			}
+
+			const jwtToken = client.config.zubrToken;
+			if (!jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+			const response = await fetch(`${zubrServerUrl}/api/admin/users/${username}`, {
+				method: "DELETE",
+				headers: {
+					Authorization: `Bearer ${jwtToken}`,
+				},
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json().catch(() => ({}));
+				return res.status(response.status).json(errorData);
+			}
+
+			const result = await response.json();
+			return res.json(result);
+		} catch (error) {
+			const errorMessage = error instanceof Error ? error.message : String(error);
+			log.error("Failed to delete user:", errorMessage);
+			return res.status(500).json({error: "Failed to delete user"});
+		}
+	});
+
 	if (Config.values.public && (Config.values.ldap || {}).enable) {
 		log.warn(
 			"Server is public and set to use LDAP. Set to private mode if trying to use LDAP authentication."

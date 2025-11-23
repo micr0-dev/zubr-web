@@ -41,6 +41,11 @@ export default defineComponent({
 	},
 	setup(props) {
 		const mode = computed(() => {
+			// ZUBR-WEB: Hide mode symbols for Zubr users (they have role icons instead)
+			if ((props.user as any).zubrRole) {
+				return "";
+			}
+
 			// Message objects have a singular mode, but user objects have modes array
 			if (props.user.modes) {
 				return props.user.modes[0];

@@ -1821,6 +1821,25 @@ part/quit messages where we don't load previews (adds a blank line otherwise) */
 	white-space: nowrap;
 }
 
+/* ZUBR-WEB: Role icons for Zubr users */
+#chat .user-mode.owner .user::after {
+	content: "\f521"; /* Crown icon for owner */
+	font-family: "Font Awesome 6 Free";
+	font-weight: 900;
+	margin-left: 6px;
+	font-size: 0.85em;
+	opacity: 0.6;
+}
+
+#chat .user-mode.admin .user::after {
+	content: "\f183"; /* Person icon for admin */
+	font-family: "Font Awesome 6 Free";
+	font-weight: 900;
+	margin-left: 6px;
+	font-size: 0.85em;
+	opacity: 0.6;
+}
+
 #chat .user-mode {
 	margin-bottom: 15px;
 }

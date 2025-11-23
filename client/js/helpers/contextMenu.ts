@@ -376,6 +376,170 @@ export function generateUserContextMenu(
 		},
 	];
 
+	// ZUBR-WEB: For Zubr servers, check role instead of IRC modes
+	if (network.status?.serverType === "zubr") {
+		// Check if our user has admin/owner role
+		const ourZubrUser = channel.users.find((u) => u.nick === network.nick);
+
+		if (ourZubrUser && (ourZubrUser as any).zubrRole) {
+			const ourRole = (ourZubrUser as any).zubrRole;
+
+			// Only owner and admin can see admin actions
+			if (ourRole === "owner" || ourRole === "admin") {
+				items.push(
+					{
+						type: "divider",
+					},
+					{
+						label: "Promote to Admin",
+						type: "item",
+						class: "action-promote",
+						action() {
+							fetch(`/api/zubr-admin/${network.uuid}/users/${user.nick}/promote`, {
+								method: "POST",
+							})
+								.then(async (response) => {
+									const result = await response.json();
+									if (!response.ok) {
+										alert(result.error || "Failed to promote user");
+										return;
+									}
+									// Refresh userlist
+									window.dispatchEvent(new CustomEvent("zubr:refresh-users"));
+								})
+								.catch((error) => {
+									alert("Failed to promote user: " + error.message);
+								});
+						},
+					},
+					{
+						label: "Demote to User",
+						type: "item",
+						class: "action-demote",
+						action() {
+							if (
+								confirm(
+									`Are you sure you want to demote ${user.nick} to regular user?`
+								)
+							) {
+								fetch(`/api/zubr-admin/${network.uuid}/users/${user.nick}/demote`, {
+									method: "POST",
+								})
+									.then(async (response) => {
+										const result = await response.json();
+										if (!response.ok) {
+											alert(result.error || "Failed to demote user");
+											return;
+										}
+										// Refresh userlist
+										window.dispatchEvent(
+											new CustomEvent("zubr:refresh-users")
+										);
+									})
+									.catch((error) => {
+										alert("Failed to demote user: " + error.message);
+									});
+							}
+						},
+					},
+					{
+						label: "Kick from Server",
+						type: "item",
+						class: "action-server-kick",
+						action() {
+							if (
+								confirm(
+									`Are you sure you want to kick ${user.nick} from the server? They can reconnect.`
+								)
+							) {
+								fetch(`/api/zubr-admin/${network.uuid}/users/${user.nick}/kick`, {
+									method: "POST",
+								})
+									.then(async (response) => {
+										const result = await response.json();
+										if (!response.ok) {
+											alert(result.error || "Failed to kick user");
+											return;
+										}
+										alert(`${user.nick} has been kicked from the server.`);
+									})
+									.catch((error) => {
+										alert("Failed to kick user: " + error.message);
+									});
+							}
+						},
+					},
+					{
+						label: "Ban User",
+						type: "item",
+						class: "action-ban",
+						action() {
+							if (
+								confirm(
+									`Are you sure you want to BAN ${user.nick}? They will be removed from the server and cannot log in.`
+								)
+							) {
+								fetch(`/api/zubr-admin/${network.uuid}/users/${user.nick}/ban`, {
+									method: "POST",
+								})
+									.then(async (response) => {
+										const result = await response.json();
+										if (!response.ok) {
+											alert(result.error || "Failed to ban user");
+											return;
+										}
+										alert(`${user.nick} has been banned.`);
+										// Refresh userlist
+										window.dispatchEvent(
+											new CustomEvent("zubr:refresh-users")
+										);
+									})
+									.catch((error) => {
+										alert("Failed to ban user: " + error.message);
+									});
+							}
+						},
+					},
+					{
+						label: "Delete Account",
+						type: "item",
+						class: "action-delete",
+						action() {
+							if (
+								confirm(
+									`Are you sure you want to PERMANENTLY DELETE ${user.nick}'s account? This action CANNOT be undone!`
+								)
+							) {
+								fetch(`/api/zubr-admin/${network.uuid}/users/${user.nick}`, {
+									method: "DELETE",
+								})
+									.then(async (response) => {
+										const result = await response.json();
+										if (!response.ok) {
+											alert(result.error || "Failed to delete user");
+											return;
+										}
+										alert(
+											`${user.nick}'s account has been permanently deleted.`
+										);
+										// Refresh userlist
+										window.dispatchEvent(
+											new CustomEvent("zubr:refresh-users")
+										);
+									})
+									.catch((error) => {
+										alert("Failed to delete user: " + error.message);
+									});
+							}
+						},
+					}
+				);
+			}
+		}
+
+		return items;
+	}
+
 	// Bail because we're in a query or we don't have a special mode.
 	if (!currentChannelUser.modes || currentChannelUser.modes.length < 1) {
 		return items;
