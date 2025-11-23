@@ -132,6 +132,28 @@ export default async function (
 	});
 
 	// ZUBR-WEB: Health API endpoint
+	// ZUBR-WEB: Development-only proxy for /api/info to check signup mode
+	// In production, this should be handled by reverse proxy (nginx, caddy, etc.)
+	if (process.env.NODE_ENV !== "production") {
+		app.get("/api/info", async (req, res) => {
+			try {
+				// Proxy to the zubr-server API
+				const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+				const response = await fetch(`${zubrServerUrl}/api/info`);
+
+				if (!response.ok) {
+					return res.status(response.status).json({error: "Failed to fetch instance info"});
+				}
+
+				const data = await response.json();
+				res.json(data);
+			} catch (error) {
+				log.error("Error fetching instance info:", String(error));
+				res.status(500).json({error: "Internal server error"});
+			}
+		});
+	}
+
 	app.get("/api/zubr-health/:networkId", async (req, res) => {
 		try {
 			const networkId = req.params.networkId;
@@ -227,17 +249,27 @@ export default async function (
 			// ZUBR-WEB: Get the JWT token from client config
 			const jwtToken = client.config.zubrToken;
 
-			if (!jwtToken) {
-				return res.status(401).json({error: "No authentication token available"});
-			}
-
 			// Fetch users from zubr-server
 			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
 
+			// First, check if this is a public instance
+			const infoResponse = await fetch(`${zubrServerUrl}/api/info`);
+			const instanceInfo = infoResponse.ok ? await infoResponse.json() : null;
+			const isPublicInstance = instanceInfo?.signup_mode === "public";
+
+			// For public instances, /api/users is accessible without auth
+			// For private instances (approval/invite), require JWT token
+			if (!isPublicInstance && !jwtToken) {
+				return res.status(401).json({error: "No authentication token available"});
+			}
+
+			const headers: Record<string, string> = {};
+			if (jwtToken) {
+				headers.Authorization = `Bearer ${jwtToken}`;
+			}
+
 			const response = await fetch(`${zubrServerUrl}/api/users`, {
-				headers: {
-					Authorization: `Bearer ${jwtToken}`,
-				},
+				headers,
 			});
 
 			if (!response.ok) {
@@ -1577,9 +1609,48 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 		return;
 	}
 
-	if (typeof data.user !== "string") {
+	// ZUBR-WEB: Handle guest authentication for public instances
+	if ("isGuest" in data && data.isGuest) {
+		// Generate random guest username
+		const crypto = require("crypto");
+		const randomHex = crypto.randomBytes(2).toString("hex");
+		const guestUsername = `web-user-${randomHex}`;
+
+		client = new Client(manager!);
+		client.name = guestUsername;
+
+		// Add default network configuration for Home Server
+		client.config.networks = [{
+			name: "Home Server",
+			host: "127.0.0.1",
+			port: 6667,
+			tls: false,
+			rejectUnauthorized: false,
+			nick: guestUsername,
+			username: guestUsername,
+			realname: "Zubr Web Guest",
+		} as any];
+
+		client.connect();
+		manager!.clients.push(client);
+
+		const cb_client = client; // ensure TS can see we never have a nil client
+		socket.on("disconnect", function () {
+			manager!.clients = _.without(manager!.clients, cb_client);
+			cb_client.quit();
+		});
+
+		initClient();
+
 		return;
 	}
+
+	if (!("user" in data) || typeof data.user !== "string") {
+		return;
+	}
+
+	// TypeScript type narrowing: after this point, data must have a user property
+	const userData = data as {user: string; password?: string; token?: string};
 
 	const authCallback = (success: boolean) => {
 		// Authorization failed
@@ -1592,7 +1663,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 				);
 			} else {
 				log.warn(
-					`Authentication failed for user ${colors.bold(data.user)} from ${colors.bold(
+					`Authentication failed for user ${colors.bold(userData.user)} from ${colors.bold(
 						getClientIp(socket)
 					)}`
 				);
@@ -1605,17 +1676,17 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 		// If authorization succeeded but there is no loaded user,
 		// load it and find the user again (this happens with LDAP)
 		if (!client) {
-			client = manager!.loadUser(data.user);
+			client = manager!.loadUser(userData.user);
 
 			if (!client) {
-				throw new Error(`authCallback: ${data.user} not found after second lookup`);
+				throw new Error(`authCallback: ${userData.user} not found after second lookup`);
 			}
 		}
 
 		initClient();
 	};
 
-	client = manager!.findClient(data.user);
+	client = manager!.findClient(userData.user);
 
 	// We have found an existing user and client has provided a token
 	if (client && "token" in data && data.token) {
@@ -1637,7 +1708,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 
 	Auth.initialize().then(() => {
 		// Perform password checking
-		Auth.auth(manager, client, data.user, data.password, authCallback);
+		Auth.auth(manager, client, userData.user, userData.password || "", authCallback);
 	});
 }
 

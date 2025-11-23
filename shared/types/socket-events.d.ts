@@ -117,7 +117,8 @@ type AuthPerformData =
 			lastMessage: number;
 			openChannel: number | null;
 			hasConfig: boolean;
-	  };
+	  }
+	| {isGuest: true}; // ZUBR-WEB: Guest authentication for public instances
 
 type AuthRegisterData = {
 	user: string;

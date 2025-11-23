@@ -2,16 +2,16 @@
 	<div id="sign-in" class="window" role="tabpanel" aria-label="Sign-up">
 		<form class="container" method="post" action="" @submit="onSubmit">
 			<img
-				src="img/logo-vertical-transparent-bg.svg"
+				src="img/zubr-logo-vertical.svg"
 				class="logo"
-				alt="The Lounge"
+				alt="Zubr"
 				width="256"
 				height="170"
 			/>
 			<img
-				src="img/logo-vertical-transparent-bg-inverted.svg"
+				src="img/zubr-logo-vertical.svg"
 				class="logo-inverted"
-				alt="The Lounge"
+				alt="Zubr"
 				width="256"
 				height="170"
 			/>

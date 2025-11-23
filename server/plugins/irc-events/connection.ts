@@ -357,6 +357,9 @@ export default <IrcEventHandler>function (irc, network) {
 					// If we got a response with "Zubr" in the name, it's Zubr
 					if (response && response.name && response.name.includes("Zubr")) {
 						network.serverType = "zubr";
+						network.instanceName = response.name; // Store instance name
+						network.instanceVersion = response.version; // Store version
+						network.instanceSignupMode = response.signup_mode; // Store signup mode
 						log.info(
 							`Detected ${network.name || network.host} as Zubr server (${response.version})`
 						);

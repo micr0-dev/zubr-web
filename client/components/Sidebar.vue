@@ -3,28 +3,28 @@
 		<div class="scrollable-area">
 			<div class="logo-container">
 				<img
-					:src="`img/logo-${isPublic() ? 'horizontal-' : ''}transparent-bg.svg`"
+					src="img/zubr-logo-horizontal.svg"
 					class="logo"
-					alt="The Lounge"
+					alt="Zubr"
 					role="presentation"
 				/>
 				<img
-					:src="`img/logo-${isPublic() ? 'horizontal-' : ''}transparent-bg-inverted.svg`"
+					src="img/zubr-logo-horizontal.svg"
 					class="logo-inverted"
-					alt="The Lounge"
+					alt="Zubr"
 					role="presentation"
 				/>
 				<span
 					v-if="isDevelopment"
-					title="The Lounge has been built in development mode"
+					title="Zubr has been built in development mode"
 					:style="{
-						backgroundColor: '#ff9e18',
-						color: '#000',
+						backgroundColor: '#4f9d69',
+						color: '#fff',
 						padding: '2px',
 						borderRadius: '4px',
 						fontSize: '12px',
 					}"
-					>DEVELOPER</span
+					>DEV</span
 				>
 			</div>
 			<NetworkList />

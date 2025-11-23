@@ -83,6 +83,12 @@ export type State = {
 	} | null;
 	messageSearchPendingQuery: SearchQuery | null;
 	searchEnabled: boolean;
+	instanceInfo: {
+		name?: string;
+		version?: string;
+		api?: string;
+		signup_mode?: string;
+	} | null;
 };
 
 const state = (): State => ({
@@ -110,6 +116,7 @@ const state = (): State => ({
 	messageSearchResults: null,
 	messageSearchPendingQuery: null,
 	searchEnabled: false,
+	instanceInfo: null,
 });
 
 type Getters = {
@@ -237,6 +244,7 @@ type Mutations = {
 	messageSearchPendingQuery(state: State, value: State["messageSearchPendingQuery"]): void;
 	messageSearchResults(state: State, value: State["messageSearchResults"]): void;
 	addMessageSearchResults(state: State, value: NonNullable<State["messageSearchResults"]>): void;
+	instanceInfo(state: State, payload: State["instanceInfo"]): void;
 };
 
 const mutations: Mutations = {
@@ -344,6 +352,9 @@ const mutations: Mutations = {
 		state.messageSearchResults = {
 			results,
 		};
+	},
+	instanceInfo(state, payload) {
+		state.instanceInfo = payload;
 	},
 };
 

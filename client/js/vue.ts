@@ -24,7 +24,23 @@ VueApp.use(router);
 VueApp.use(store, key);
 
 VueApp.mount("#app");
-socket.open();
+
+// Fetch instance info to check if it's a public instance
+(async () => {
+	try {
+		// Use relative URL to avoid CSP issues
+		const response = await fetch("/api/info");
+		if (response.ok) {
+			const info = await response.json();
+			store.commit("instanceInfo", info);
+		}
+	} catch (error) {
+		// If fetch fails, continue with normal flow
+		console.warn("Failed to fetch instance info:", error);
+	}
+
+	socket.open();
+})();
 
 store.watch(
 	(state) => state.sidebarOpen,

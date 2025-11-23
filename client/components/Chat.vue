@@ -27,6 +27,18 @@
 						>
 							[{{ network.status.serverType.toUpperCase() }}]
 						</span>
+						<span
+							v-if="channel.type === 'lobby' && network.status.instanceName"
+							class="instance-info"
+						>
+							<span class="instance-name">{{ network.status.instanceName }}</span>
+							<span v-if="network.status.instanceVersion" class="instance-version">
+								v{{ network.status.instanceVersion }}
+							</span>
+							<span v-if="network.status.instanceSignupMode" class="instance-signup-mode">
+								• {{ titleCase(network.status.instanceSignupMode) }}
+							</span>
+						</span>
 						<span v-if="channel.type !== 'lobby'" class="breadcrumb-separator"> &gt; </span>
 						<span v-if="channel.type !== 'lobby'" class="breadcrumb-channel">{{ channel.name }}</span>
 					</span>
@@ -264,6 +276,10 @@ export default defineComponent({
 			});
 		};
 
+
+		const titleCase = (str: string) => {
+			return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+		};
 		watch(
 			() => props.channel,
 			() => {
@@ -302,6 +318,7 @@ export default defineComponent({
 			saveTopic,
 			openContextMenu,
 			openMentions,
+			titleCase,
 		};
 	},
 });

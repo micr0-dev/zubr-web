@@ -125,6 +125,9 @@ class Network {
 	status!: NetworkStatus;
 	serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
 	zubrRole?: "owner" | "admin" | "user"; // ZUBR-WEB: User's role on Zubr server
+	instanceName?: string; // ZUBR-WEB: Instance name from /api/info
+	instanceVersion?: string; // ZUBR-WEB: Instance version from /api/info
+	instanceSignupMode?: string; // ZUBR-WEB: Signup mode from /api/info
 
 	serverOptions!: {
 		CHANTYPES: string[];
@@ -523,6 +526,9 @@ class Network {
 			secure: false,
 			serverType: this.serverType, // ZUBR-WEB: Include server type
 			zubrRole: this.zubrRole, // ZUBR-WEB: Include user's role
+			instanceName: this.instanceName, // ZUBR-WEB: Include instance name
+			instanceVersion: this.instanceVersion, // ZUBR-WEB: Include instance version
+			instanceSignupMode: this.instanceSignupMode, // ZUBR-WEB: Include signup mode
 		};
 
 		if (this.irc && this.irc.connection && this.irc.connection.transport) {

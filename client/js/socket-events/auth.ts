@@ -42,9 +42,24 @@ socket.on("auth:start", async function (data) {
 	const token = storage.get("token");
 	const doFastAuth = user && token;
 
+	// Check if this is a public instance (no authentication required)
+	const isPublicInstance = store.state.instanceInfo?.signup_mode === "public";
+
 	// If we reconnect and no longer have a stored token, reload the page
-	if (store.state.appLoaded && !doFastAuth) {
+	// (unless it's a public instance)
+	if (store.state.appLoaded && !doFastAuth && !isPublicInstance) {
 		return reloadPage("Authentication failed, reloading…");
+	}
+
+	// If this is a public instance and we don't have auth, perform guest auth
+	if (isPublicInstance && !doFastAuth) {
+		store.commit("currentUserVisibleError", "Connecting as guest…");
+		updateLoadingMessage();
+
+		socket.emit("auth:perform", {
+			isGuest: true,
+		});
+		return;
 	}
 
 	// If we have user and token stored, perform auth without showing sign-in first

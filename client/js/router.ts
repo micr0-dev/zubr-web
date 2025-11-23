@@ -27,6 +27,12 @@ const router = createRouter({
 			path: "/sign-in",
 			component: SignIn,
 			beforeEnter(to, from, next) {
+				// Prevent navigating to sign-in on public instances
+				if (store.state.instanceInfo?.signup_mode === "public") {
+					next(false);
+					return;
+				}
+
 				// Prevent navigating to sign-in when already signed in
 				if (store.state.appLoaded) {
 					next(false);
@@ -41,6 +47,12 @@ const router = createRouter({
 			path: "/sign-up",
 			component: SignUp,
 			beforeEnter(to, from, next) {
+				// Prevent navigating to sign-up on public instances
+				if (store.state.instanceInfo?.signup_mode === "public") {
+					next(false);
+					return;
+				}
+
 				// Prevent navigating to sign-up when already signed in
 				if (store.state.appLoaded) {
 					next(false);
