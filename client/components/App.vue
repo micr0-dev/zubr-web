@@ -1,14 +1,15 @@
 <template>
 	<div id="viewport" :class="viewportClasses" role="tablist">
-		<Sidebar v-if="store.state.appLoaded" :overlay="overlay" />
+		<Sidebar v-if="store.state.appLoaded && !isAuthPage" :overlay="overlay" />
 		<div
+			v-if="!isAuthPage"
 			id="sidebar-overlay"
 			ref="overlay"
 			aria-hidden="true"
 			@click="store.commit('sidebarOpen', false)"
 		/>
 		<router-view ref="loungeWindow"></router-view>
-		<Mentions />
+		<Mentions v-if="!isAuthPage" />
 		<ImageViewer ref="imageViewer" />
 		<ContextMenu ref="contextMenu" />
 		<ConfirmDialog ref="confirmDialog" />
@@ -40,6 +41,7 @@ import {
 	InjectionKey,
 } from "vue";
 import {useStore} from "../js/store";
+import {useRoute} from "vue-router";
 import type {DebouncedFunc} from "lodash";
 
 export const imageViewerKey = Symbol() as InjectionKey<Ref<typeof ImageViewer | null>>;
@@ -57,6 +59,7 @@ export default defineComponent({
 	},
 	setup() {
 		const store = useStore();
+		const route = useRoute();
 		const overlay = ref(null);
 		const loungeWindow = ref(null);
 		const imageViewer = ref(null);
@@ -66,6 +69,11 @@ export default defineComponent({
 		provide(imageViewerKey, imageViewer);
 		provide(contextMenuKey, contextMenu);
 		provide(confirmDialogKey, confirmDialog);
+
+		// Check if we're on an auth page (sign-in or sign-up)
+		const isAuthPage = computed(() => {
+			return route.name === "SignIn" || route.name === "SignUp";
+		});
 
 		const viewportClasses = computed(() => {
 			return {
@@ -190,6 +198,7 @@ export default defineComponent({
 			imageViewer,
 			contextMenu,
 			confirmDialog,
+			isAuthPage,
 		};
 	},
 });

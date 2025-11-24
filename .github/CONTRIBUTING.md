@@ -1,22 +1,22 @@
 ## Contributing
 
-Welcome to The Lounge, it's great to have you here! We thank you in advance for
+Welcome to Zubr, it's great to have you here! We thank you in advance for
 your contributions.
 
 ### I want to report a bug
 
 - Look at the [open and closed
-  issues](https://github.com/thelounge/thelounge/issues?q=is%3Aissue) to see if
+  issues](https://github.com/micr0-dev/zubr-web/issues?q=is%3Aissue) to see if
   this was not already discussed before. If you can't see any, feel free to
-  [open a new issue](https://github.com/thelounge/thelounge/issues/new).
+  [open a new issue](https://github.com/micr0-dev/zubr-web/issues/new).
 - If you think you discovered a security vulnerability, **do not open a public
   issue on GitHub.** Refer to our [security guidelines](/SECURITY.md) instead.
 
 ### I want to contribute to the code
 
 - Make sure to discuss your ideas with the community in an
-  [issue](https://github.com/thelounge/thelounge/issues) or on the IRC channel.
-- Take a look at the open issues labeled as [`help wanted`](https://github.com/thelounge/thelounge/labels/help%20wanted)
+  [issue](https://github.com/micr0-dev/zubr-web/issues) or on the IRC channel.
+- Take a look at the open issues labeled as [`help wanted`](https://github.com/micr0-dev/zubr-web/labels/help%20wanted)
   if you want to help without having a specific idea in mind.
 - Make sure that your PRs do not contain unnecessary commits or merge commits.
   [Squash commits](https://git-scm.com/book/en/v2/Git-Tools-Rewriting-History)
@@ -30,7 +30,7 @@ your contributions.
   can read more about this in the [maintainers'
   corner](https://github.com/thelounge/thelounge/wiki/Maintainers'-corner).
 - Please document any relevant changes in the documentation that can be found
-  [in its own repository](https://github.com/thelounge/thelounge.chat).
+  [in its own repository](https://github.com/micr0-dev/zubr-web.chat).
 - Note that we use prettier on the project. You can set up IDE plugins to format
   on save ([see VS Code one here](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode)).
 - We have a git hook to automatically run prettier before commit, in case you don't install the plugin.

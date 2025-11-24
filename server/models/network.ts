@@ -128,6 +128,7 @@ class Network {
 	instanceName?: string; // ZUBR-WEB: Instance name from /api/info
 	instanceVersion?: string; // ZUBR-WEB: Instance version from /api/info
 	instanceSignupMode?: string; // ZUBR-WEB: Signup mode from /api/info
+	instanceSourceCode?: string; // ZUBR-WEB: Source code URL from /api/info
 
 	serverOptions!: {
 		CHANTYPES: string[];
@@ -529,6 +530,7 @@ class Network {
 			instanceName: this.instanceName, // ZUBR-WEB: Include instance name
 			instanceVersion: this.instanceVersion, // ZUBR-WEB: Include instance version
 			instanceSignupMode: this.instanceSignupMode, // ZUBR-WEB: Include signup mode
+			instanceSourceCode: this.instanceSourceCode, // ZUBR-WEB: Include source code URL
 		};
 
 		if (this.irc && this.irc.connection && this.irc.connection.transport) {

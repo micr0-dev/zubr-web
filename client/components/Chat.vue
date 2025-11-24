@@ -31,7 +31,16 @@
 							v-if="channel.type === 'lobby' && network.status.instanceName"
 							class="instance-info"
 						>
-							<span class="instance-name">{{ network.status.instanceName }}</span>
+							<a
+								v-if="network.status.instanceSourceCode"
+								:href="network.status.instanceSourceCode"
+								target="_blank"
+								rel="noopener"
+								class="instance-name"
+							>
+								{{ network.status.instanceName }}
+							</a>
+							<span v-else class="instance-name">{{ network.status.instanceName }}</span>
 							<span v-if="network.status.instanceVersion" class="instance-version">
 								v{{ network.status.instanceVersion }}
 							</span>

@@ -62,6 +62,11 @@ interface ServerToClientEvents {
 		connected: boolean;
 		secure: boolean;
 		serverType?: "zubr" | "irc"; // ZUBR-WEB: Server type detection
+		zubrRole?: "owner" | "admin" | "user"; // ZUBR-WEB: User's role on Zubr server
+		instanceName?: string; // ZUBR-WEB: Instance name
+		instanceVersion?: string; // ZUBR-WEB: Instance version
+		instanceSignupMode?: string; // ZUBR-WEB: Signup mode
+		instanceSourceCode?: string; // ZUBR-WEB: Source code URL
 	}>;
 	"network:info": EventHandler<{uuid: string}>;
 	"network:name": EventHandler<{uuid: string; name: string}>;

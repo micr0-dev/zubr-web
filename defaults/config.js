@@ -119,7 +119,7 @@ module.exports = {
     // from URLs posted in channels and private messages.
     //
     // This value is set to `false` by default.
-    prefetch: false,
+    prefetch: true,
 
     // ### `disableMediaPreview`
     //
@@ -151,7 +151,7 @@ module.exports = {
     // restarts.
     //
     // This value is set to `false` by default.
-    prefetchStorage: false,
+    prefetchStorage: true,
 
     // ### `prefetchMaxImageSize`
     //
@@ -208,7 +208,7 @@ module.exports = {
     //   to correctly proxy the uploads URLs back to The Lounge.
     //   This value is set to `null` by default.
     fileUpload: {
-        enable: false,
+        enable: true,
         maxFileSize: 10240,
         baseUrl: null,
     },
@@ -227,7 +227,7 @@ module.exports = {
     //
     // This value is set to `"The Lounge - https://thelounge.chat"` by
     // default.
-    leaveMessage: "The Lounge - https://thelounge.chat",
+    leaveMessage: "left the chat",
 
     // ## Default network
 

@@ -29,6 +29,13 @@
 			</div>
 			<NetworkList />
 		</div>
+		<div v-if="isGuestUser" class="guest-prompt">
+			<p class="guest-message">Make an account or log in to start chatting!</p>
+			<div class="guest-buttons">
+				<router-link to="/sign-in" class="btn btn-signin">Log in</router-link>
+				<router-link to="/sign-up" class="btn btn-signup">Create account</router-link>
+			</div>
+		</div>
 		<footer id="footer">
 			<span
 				class="tooltipped tooltipped-n tooltipped-no-touch"
@@ -90,7 +97,7 @@
 </template>
 
 <script lang="ts">
-import {defineComponent, nextTick, onMounted, onUnmounted, PropType, ref} from "vue";
+import {defineComponent, nextTick, onMounted, onUnmounted, PropType, ref, computed} from "vue";
 import {useRoute} from "vue-router";
 import {useStore} from "../js/store";
 import NetworkList from "./NetworkList.vue";
@@ -108,6 +115,17 @@ export default defineComponent({
 
 		const store = useStore();
 		const route = useRoute();
+
+		// Check if user is a guest (username starts with "web-user-")
+		const isGuestUser = computed(() => {
+			if (store.state.networks.length === 0) {
+				return false;
+			}
+			// Check if any network has a nick starting with "web-user-"
+			return store.state.networks.some(
+				(network) => network.nick && network.nick.startsWith("web-user-")
+			);
+		});
 
 		const touchStartPos = ref<Touch | null>();
 		const touchCurPos = ref<Touch | null>();
@@ -263,6 +281,7 @@ export default defineComponent({
 			onTouchMove,
 			onTouchEnd,
 			isPublic,
+			isGuestUser,
 		};
 	},
 });

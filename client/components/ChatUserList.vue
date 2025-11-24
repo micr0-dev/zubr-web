@@ -140,7 +140,7 @@ export default defineComponent({
 			}
 
 			try {
-				const response = await fetch(`/api/zubr-users/${props.network.uuid}`);
+				const response = await fetch("/api/users");
 
 				if (!response.ok) {
 					console.error("Failed to fetch Zubr users:", response.statusText);

@@ -52,6 +52,18 @@ socket.on("init", async function (data) {
 			} else {
 				await navigate("Connect");
 			}
+		} else if (router.currentRoute?.value?.params?.id) {
+			// ZUBR-WEB: If we're already on a channel route (e.g., direct navigation to /#/chan-1)
+			// trigger a re-navigation now that we have the network data
+			const channelId = parseInt(String(router.currentRoute.value.params.id), 10);
+			const channel = store.getters.findChannel(channelId);
+
+			if (channel) {
+				switchToChannel(channel.channel);
+			} else if (store.state.networks.length > 0) {
+				// Channel doesn't exist, go to first available channel
+				switchToChannel(store.state.networks[0].channels[0]);
+			}
 		}
 	}
 });

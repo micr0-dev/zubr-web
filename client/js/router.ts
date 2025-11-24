@@ -27,14 +27,13 @@ const router = createRouter({
 			path: "/sign-in",
 			component: SignIn,
 			beforeEnter(to, from, next) {
-				// Prevent navigating to sign-in on public instances
-				if (store.state.instanceInfo?.signup_mode === "public") {
-					next(false);
-					return;
-				}
+				// Check if user is a guest (username starts with "web-user-")
+				const isGuest = store.state.networks.some(
+					(network) => network.nick && network.nick.startsWith("web-user-")
+				);
 
-				// Prevent navigating to sign-in when already signed in
-				if (store.state.appLoaded) {
+				// Prevent navigating to sign-in when already signed in (but allow guests)
+				if (store.state.appLoaded && !isGuest) {
 					next(false);
 					return;
 				}
@@ -47,14 +46,13 @@ const router = createRouter({
 			path: "/sign-up",
 			component: SignUp,
 			beforeEnter(to, from, next) {
-				// Prevent navigating to sign-up on public instances
-				if (store.state.instanceInfo?.signup_mode === "public") {
-					next(false);
-					return;
-				}
+				// Check if user is a guest (username starts with "web-user-")
+				const isGuest = store.state.networks.some(
+					(network) => network.nick && network.nick.startsWith("web-user-")
+				);
 
-				// Prevent navigating to sign-up when already signed in
-				if (store.state.appLoaded) {
+				// Prevent navigating to sign-up when already signed in (but allow guests)
+				if (store.state.appLoaded && !isGuest) {
 					next(false);
 					return;
 				}

@@ -42,6 +42,28 @@ socket.on("network:status", function (data) {
 		network.status.serverType = data.serverType;
 	}
 
+	// ZUBR-WEB: Update instance info
+	if (data.instanceName) {
+		network.status.instanceName = data.instanceName;
+	}
+
+	if (data.instanceVersion) {
+		network.status.instanceVersion = data.instanceVersion;
+	}
+
+	if (data.instanceSignupMode) {
+		network.status.instanceSignupMode = data.instanceSignupMode;
+	}
+
+	if (data.instanceSourceCode) {
+		network.status.instanceSourceCode = data.instanceSourceCode;
+	}
+
+	// ZUBR-WEB: Update user role
+	if (data.zubrRole) {
+		network.status.zubrRole = data.zubrRole;
+	}
+
 	if (!data.connected) {
 		network.channels.forEach((channel) => {
 			channel.users = []; // TODO: untangle this

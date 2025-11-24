@@ -104,6 +104,7 @@ class Client {
 	highlightRegex!: RegExp | null;
 	highlightExceptionRegex!: RegExp | null;
 	messageProvider?: SqliteMessageStorage;
+	isGuest?: boolean; // ZUBR-WEB: Mark ephemeral guest users
 
 	fileHash!: string;
 
@@ -854,6 +855,11 @@ class Client {
 	save = _.debounce(
 		function SaveClient(this: Client) {
 			if (Config.values.public) {
+				return;
+			}
+
+			// ZUBR-WEB: Don't save guest users
+			if (this.isGuest) {
 				return;
 			}
 

@@ -211,79 +211,26 @@ export default async function (
 	// ZUBR-WEB: Enable JSON body parsing for API routes
 	app.use(express.json());
 
-	// ZUBR-WEB: Users API endpoint
-	app.get("/api/zubr-users/:networkId", async (req, res) => {
-		try {
-			const networkId = req.params.networkId;
+	// ZUBR-WEB: Development-only proxy for /api/users
+	// In production, this should be handled by reverse proxy (nginx, caddy, etc.)
+	if (process.env.NODE_ENV !== "production") {
+		app.get("/api/users", async (req, res) => {
+			try {
+				const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
+				const response = await fetch(`${zubrServerUrl}/api/users`);
 
-			if (!manager) {
-				return res.status(500).json({error: "Manager not initialized"});
+				if (!response.ok) {
+					return res.status(response.status).json({error: "Failed to fetch users"});
+				}
+
+				const data = await response.json();
+				res.json(data);
+			} catch (error) {
+				log.error("Error fetching users:", String(error));
+				res.status(500).json({error: "Internal server error"});
 			}
-
-			const client = manager.clients.find((c: any) =>
-				c.networks.some((n: any) => n.uuid === networkId)
-			);
-
-			if (!client) {
-				return res.status(404).json({error: "Network not found"});
-			}
-
-			const network = client.networks.find((n: any) => n.uuid === networkId);
-
-			if (!network) {
-				return res.status(404).json({error: "Network not found"});
-			}
-
-			// Only allow for Zubr servers
-			if (network.serverType !== "zubr") {
-				return res.status(400).json({error: "Network is not a Zubr server"});
-			}
-
-			// Check if this is the home server
-			const isHomeServer = network.host === "127.0.0.1" || network.host === "localhost";
-
-			if (!isHomeServer) {
-				return res.status(400).json({error: "Users endpoint only available for home server"});
-			}
-
-			// ZUBR-WEB: Get the JWT token from client config
-			const jwtToken = client.config.zubrToken;
-
-			// Fetch users from zubr-server
-			const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
-
-			// First, check if this is a public instance
-			const infoResponse = await fetch(`${zubrServerUrl}/api/info`);
-			const instanceInfo = infoResponse.ok ? await infoResponse.json() : null;
-			const isPublicInstance = instanceInfo?.signup_mode === "public";
-
-			// For public instances, /api/users is accessible without auth
-			// For private instances (approval/invite), require JWT token
-			if (!isPublicInstance && !jwtToken) {
-				return res.status(401).json({error: "No authentication token available"});
-			}
-
-			const headers: Record<string, string> = {};
-			if (jwtToken) {
-				headers.Authorization = `Bearer ${jwtToken}`;
-			}
-
-			const response = await fetch(`${zubrServerUrl}/api/users`, {
-				headers,
-			});
-
-			if (!response.ok) {
-				throw new Error(`Failed to fetch users: ${response.statusText}`);
-			}
-
-			const usersData = await response.json();
-			return res.json(usersData);
-		} catch (error) {
-			const errorMessage = error instanceof Error ? error.message : String(error);
-			log.error("Failed to fetch users data:", errorMessage);
-			return res.status(500).json({error: "Failed to fetch users data"});
-		}
-	});
+		});
+	}
 
 	// ZUBR-WEB: Admin - Get user permissions
 	app.get("/api/zubr-admin/:networkId/users/:username/permissions", async (req, res) => {
@@ -1618,6 +1565,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 
 		client = new Client(manager!);
 		client.name = guestUsername;
+		client.isGuest = true; // Mark as guest to prevent saving
 
 		// Add default network configuration for Home Server
 		client.config.networks = [{

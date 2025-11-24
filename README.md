@@ -1,95 +1,102 @@
 <h1 align="center">
 	<img
 		width="300"
-		alt="The Lounge"
-		src="https://raw.githubusercontent.com/thelounge/thelounge/master/client/img/logo-vertical-transparent-bg.svg?sanitize=true">
+		alt="Zubr"
+		src="https://raw.githubusercontent.com/micr0-dev/zubr-web/master/client/img/zubr-logo-vertical.svg">
 </h1>
 
 <h3 align="center">
-	Modern web IRC client designed for self-hosting
+	Bringing IRC into the modern era
 </h3>
 
 <p align="center">
 	<strong>
-		<a href="https://thelounge.chat/">Website</a>
+		<a href="https://github.com/micr0-dev/zubr-server">Zubr Server</a>
 		•
-		<a href="https://thelounge.chat/docs">Docs</a>
+		<a href="https://github.com/micr0-dev/zubr-web">Zubr Web</a>
 		•
-		<a href="https://demo.thelounge.chat/">Demo</a>
-    •
-		<a href="https://github.com/thelounge/thelounge-docker">Docker</a>
+		<a href="https://github.com/micr0-dev/zubr-web/issues">Issues</a>
 	</strong>
 </p>
-<p align="center">
-	<a href="https://demo.thelounge.chat/"><img
-		alt="#thelounge IRC channel on Libera.Chat"
-		src="https://img.shields.io/badge/Libera.Chat-%23thelounge-415364.svg?colorA=ff9e18"></a>
-	<a href="https://yarn.pm/thelounge"><img
-		alt="npm version"
-		src="https://img.shields.io/npm/v/thelounge.svg?colorA=333a41&maxAge=3600"></a>
-	<a href="https://github.com/thelounge/thelounge/actions"><img
-		alt="Build Status"
-		src="https://github.com/thelounge/thelounge/workflows/Build/badge.svg"></a>
-</p>
 
-<p align="center">
-	<img src="https://raw.githubusercontent.com/thelounge/thelounge.github.io/master/img/thelounge-screenshot.png" width="550">
-</p>
+## What is Zubr?
 
-## Overview
+**Zubr** is a hard fork of [The Lounge](https://github.com/thelounge/thelounge), designed to modernize the IRC experience while maintaining compatibility with the IRC protocol. Zubr consists of two main components:
 
-- **Modern features brought to IRC.** Push notifications, link previews, new message markers, and more bring IRC to the 21st century.
-- **Always connected.** Remains connected to IRC servers while you are offline.
-- **Cross platform.** It doesn't matter what OS you use, it just works wherever Node.js runs.
-- **Responsive interface.** The client works smoothly on every desktop, smartphone and tablet.
-- **Synchronized experience.** Always resume where you left off no matter what device.
+- **[Zubr Server](https://github.com/micr0-dev/zubr-server)**: A modern IRC server wrapper powered by insIRCd with enhanced features, built-in user management and authentication flow.
+- **Zubr Web**: A feature-rich web client that works Zubr servers.
 
-To learn more about configuration, usage and features of The Lounge, take a look at [the website](https://thelounge.chat).
+The point is to vertically integrate the IRC experience, making it more user-friendly and accessible to a broader audience.
 
-The Lounge is the official and community-managed fork of [Shout](https://github.com/erming/shout), by [Mattias Erming](https://github.com/erming).
+### Key Features
 
-## Installation and usage
+- **Modern web interface**: Beautiful, responsive design that works on desktop, tablet, and mobile
+- **Always connected**: Stay online even when your browser is closed
+- **Rich user experience**: Guest access, improved user management, server health monitoring, and more
+- **Push notifications**: Never miss a message with real-time notifications
+- **Link previews**: See previews of shared links directly in the chat
+- **Cross-platform**: Runs anywhere Node.js runs
 
-The Lounge requires latest [Node.js](https://nodejs.org/) LTS version or more recent.
-The [Yarn package manager](https://yarnpkg.com/) is also recommended.
-If you want to install with npm, `--unsafe-perm` is required for a correct install.
+## Acknowledgments
 
-### Running stable releases
+Zubr would not exist without the incredible work of The Lounge team and community. **The Lounge** is an outstanding project that has made IRC accessible and enjoyable for countless users. We are deeply grateful for their years of dedication, thoughtful design, and excellent codebase.
 
-Please refer to the [install and upgrade documentation on our website](https://thelounge.chat/docs/install-and-upgrade) for all available installation methods.
+This hard fork builds upon The Lounge's solid foundation to explore new directions in modernizing IRC. We encourage you to check out [The Lounge](https://thelounge.chat/) if you're looking for a stable, well-maintained IRC web client.
 
-### Running from source
+Special thanks to:
+- The entire [The Lounge team](https://github.com/thelounge/thelounge/graphs/contributors) for their amazing work
+- [Mattias Erming](https://github.com/erming) for creating the original Shout project
 
-The following commands install and run the development version of The Lounge:
+## Installation and Usage
+
+### Prerequisites
+
+Zubr Web requires:
+- Latest [Node.js](https://nodejs.org/) LTS version or more recent
+- [npm](https://www.npmjs.com/) package manager
+- [Yarn](https://yarnpkg.com/) package manager
+
+### Running from Source
 
 ```sh
-git clone https://github.com/thelounge/thelounge.git
-cd thelounge
+git clone https://github.com/micr0-dev/zubr-web.git
+cd zubr-web
 yarn install
 NODE_ENV=production yarn build
 yarn start
+
 ```
 
-When installed like this, `thelounge` executable is not created. Use `node index <command>` to run commands.
+For connecting to a Zubr server instance, configure the connection settings in your config file.
 
-⚠️ While it is the most recent codebase, this is not production-ready! Run at
-your own risk. It is also not recommended to run this as root.
+⚠️ **Note**: This is actively being developed. While functional, it may have bugs and breaking changes.
 
-## Development setup
+## Development Setup
 
-Simply follow the instructions to run The Lounge from source above, on your own
-fork.
+Follow the instructions to run Zubr Web from source above, on your own fork.
 
-Before submitting any change, make sure to:
+Before submitting any changes:
 
-- Read the [Contributing instructions](https://github.com/thelounge/thelounge/blob/master/.github/CONTRIBUTING.md#contributing)
-- Run `yarn test` to execute linters and the test suite
-  - Run `yarn format:prettier` if linting fails
-- Run `yarn build:client` if you change or add anything in `client/js` or `client/components`
-  - The built files will be output to `public/` by webpack
-- Run `yarn build:server` if you change anything in `server/`
-  - The built files will be output to `dist/` by tsc
-- `yarn dev` can be used to start The Lounge with hot module reloading
+1. Run `yarn test` to execute linters and the test suite
+   - Run `yarn format:prettier` if linting fails
+2. Run `yarn build:client` if you change anything in `client/js` or `client/components`
+3. Run `yarn build:server` if you change anything in `server/`
+4. Start the server with `yarn start`
 
-To ensure that you don't commit files that fail the linting, you can install a pre-commit git hook.
-Execute `yarn githooks-install` to do so.
+## Contributing
+
+We welcome contributions! Please:
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+For bug reports and feature requests, please use the [GitHub Issues](https://github.com/micr0-dev/zubr-web/issues) page.
+
+## License
+
+Zubr Web is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+This project is a hard fork of The Lounge, which is also MIT licensed. 

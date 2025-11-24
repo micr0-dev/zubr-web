@@ -360,9 +360,12 @@ export default <IrcEventHandler>function (irc, network) {
 						network.instanceName = response.name; // Store instance name
 						network.instanceVersion = response.version; // Store version
 						network.instanceSignupMode = response.signup_mode; // Store signup mode
+						network.instanceSourceCode = response.source_code; // Store source code URL
 						log.info(
 							`Detected ${network.name || network.host} as Zubr server (${response.version})`
 						);
+						log.debug(`[ZUBR] API response:`, JSON.stringify(response));
+						log.debug(`[ZUBR] Source code URL: ${network.instanceSourceCode}`);
 
 						// ZUBR-WEB: Fetch user's role
 						await fetchUserRole(network, client);
