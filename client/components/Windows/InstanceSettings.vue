@@ -17,9 +17,17 @@
 						name="signup_mode"
 					>
 						<option value="public">Public - Anyone can sign up</option>
-						<option value="approval">Approval - Requires admin approval</option>
-						<option value="invite">Invite Only - Requires invite code</option>
+						<option value="approval" disabled>
+							Approval - Requires admin approval (Not yet implemented)
+						</option>
+						<option value="invite" disabled>
+							Invite Only - Requires invite code (Not yet implemented)
+						</option>
 					</select>
+					<small class="help-text"
+						>Note: Only Public mode is currently available. Approval and Invite modes are
+						coming soon.</small
+					>
 				</div>
 
 				<div class="settings-group">
@@ -90,7 +98,8 @@ export default defineComponent({
 				}
 
 				const data = await response.json();
-				signupMode.value = data.signup_mode || "public";
+				// Only allow "public" mode for now - force to public even if server has another value
+				signupMode.value = "public";
 				motd.value = data.motd || "";
 			} catch (error) {
 				errorMessage.value = "Failed to connect to server";
@@ -104,6 +113,13 @@ export default defineComponent({
 			saving.value = true;
 			successMessage.value = "";
 			errorMessage.value = "";
+
+			// Only allow "public" mode for now
+			if (signupMode.value !== "public") {
+				errorMessage.value = "Only Public signup mode is currently supported";
+				saving.value = false;
+				return;
+			}
 
 			try {
 				const response = await fetch(`/api/zubr-instance/${networkUuid}/settings`, {
@@ -176,6 +192,14 @@ export default defineComponent({
 	margin-bottom: 8px;
 	font-weight: 600;
 	color: var(--body-color);
+}
+
+.help-text {
+	display: block;
+	margin-top: 8px;
+	color: var(--body-color-muted);
+	font-size: 13px;
+	font-style: italic;
 }
 
 .input {

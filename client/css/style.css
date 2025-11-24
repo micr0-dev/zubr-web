@@ -2330,6 +2330,20 @@ part/quit messages where we don't load previews (adds a blank line otherwise) */
     margin-top: 25px;
 }
 
+#sign-in .btn-secondary,
+#sign-up .btn-secondary {
+    margin-top: 10px;
+    background: transparent;
+    border: 1px solid var(--link-color);
+    color: var(--link-color);
+}
+
+#sign-in .btn-secondary:hover:not(:disabled),
+#sign-up .btn-secondary:hover:not(:disabled) {
+    background: var(--link-color);
+    color: white;
+}
+
 #sign-in .error {
     color: #e74c3c;
     margin-top: 1em;

@@ -27,18 +27,27 @@ VueApp.mount("#app");
 
 // Fetch instance info to check if it's a public instance
 (async () => {
+	console.log("[INIT] Starting instance info fetch");
 	try {
 		// Use relative URL to avoid CSP issues
 		const response = await fetch("/api/info");
+		console.log("[INIT] Instance info fetch response:", {
+			ok: response.ok,
+			status: response.status,
+		});
 		if (response.ok) {
 			const info = await response.json();
+			console.log("[INIT] Instance info received:", info);
 			store.commit("instanceInfo", info);
+		} else {
+			console.warn("[INIT] Instance info fetch failed with status:", response.status);
 		}
 	} catch (error) {
 		// If fetch fails, continue with normal flow
-		console.warn("Failed to fetch instance info:", error);
+		console.warn("[INIT] Failed to fetch instance info:", error);
 	}
 
+	console.log("[INIT] Opening socket connection");
 	socket.open();
 })();
 

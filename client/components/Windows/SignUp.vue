@@ -70,6 +70,15 @@
 
 			<button :disabled="inFlight || successShown" type="submit" class="btn">Sign up</button>
 
+			<button
+				:disabled="inFlight || successShown"
+				type="button"
+				class="btn btn-secondary"
+				@click="continueAsGuest"
+			>
+				Continue as Guest
+			</button>
+
 			<p class="sign-in-link">
 				Already have an account?
 				<router-link to="/sign-in">Sign in</router-link>
@@ -150,6 +159,15 @@ export default defineComponent({
 			socket.emit("auth:register", values);
 		};
 
+		const continueAsGuest = () => {
+			inFlight.value = true;
+			errorShown.value = false;
+			successShown.value = false;
+
+			// Emit guest authentication
+			socket.emit("auth:perform", {isGuest: true});
+		};
+
 		onMounted(() => {
 			socket.on("auth:register:success", onRegisterSuccess);
 			socket.on("auth:register:failed", onRegisterFailed);
@@ -169,6 +187,7 @@ export default defineComponent({
 			password,
 			passwordConfirm,
 			onSubmit,
+			continueAsGuest,
 		};
 	},
 });

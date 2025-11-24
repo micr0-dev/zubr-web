@@ -80,6 +80,12 @@
 	content: "\f013"; /* http://fontawesome.io/icon/cog/ */
 }
 
+.settings-menu .sign-out::before {
+    content: "\f08b"; /* http://fontawesome.io/icon/arrow-right-from-bracket/ */
+}
+
+
+
 .settings-menu button:hover,
 .settings-menu button.active {
 	color: var(--body-color);

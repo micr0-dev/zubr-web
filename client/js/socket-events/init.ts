@@ -8,15 +8,23 @@ import {ClientNetwork, ClientChan} from "../types";
 import {SharedNetwork, SharedNetworkChan} from "../../../shared/types/network";
 
 socket.on("init", async function (data) {
+	console.log("[INIT] Init event received", {
+		hasToken: !!data.token,
+		networksCount: data.networks.length,
+		activeChannel: data.active,
+	});
+
 	store.commit("networks", mergeNetworkData(data.networks));
 	store.commit("isConnected", true);
 	store.commit("currentUserVisibleError", null);
 
 	if (data.token) {
+		console.log("[INIT] Storing auth token");
 		storage.set("token", data.token);
 	}
 
 	if (!store.state.appLoaded) {
+		console.log("[INIT] App not loaded yet, initializing");
 		store.commit("appLoaded");
 
 		socket.emit("setting:get");
@@ -35,21 +43,26 @@ socket.on("init", async function (data) {
 		if (await handleQueryParams()) {
 			// If we handled query parameters like irc:// links or just general
 			// connect parameters in public mode, then nothing to do here
+			console.log("[INIT] Handled query params, stopping");
 			return;
 		}
 
 		// If we are on an unknown route or still on SignIn component
 		// then we can open last known channel on server, or Connect window if none
+		console.log("[INIT] Current route:", router.currentRoute?.value?.name);
 		if (!router.currentRoute?.value?.name || router.currentRoute?.value?.name === "SignIn") {
 			const channel = store.getters.findChannel(data.active);
 
 			if (channel) {
+				console.log("[INIT] Switching to active channel:", data.active);
 				switchToChannel(channel.channel);
 			} else if (store.state.networks.length > 0) {
 				// Server is telling us to open a channel that does not exist
 				// For example, it can be unset if you first open the page after server start
+				console.log("[INIT] Active channel not found, switching to first channel");
 				switchToChannel(store.state.networks[0].channels[0]);
 			} else {
+				console.log("[INIT] No networks, navigating to Connect");
 				await navigate("Connect");
 			}
 		} else if (router.currentRoute?.value?.params?.id) {
