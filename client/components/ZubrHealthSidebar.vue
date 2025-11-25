@@ -90,8 +90,23 @@ export default defineComponent({
 				isLoading.value = true;
 				error.value = null;
 
-				// Fetch health directly from Zubr server
-				const response = await fetch("/api/health");
+				// Determine the health endpoint URL based on whether this is the home server or a remote instance
+				const isHomeServer = ["127.0.0.1", "0.0.0.0", "localhost"].includes(
+					props.network.host
+				);
+
+				let healthUrl: string;
+
+				if (isHomeServer) {
+					// For home server, use the local API proxy
+					healthUrl = "/api/health";
+				} else {
+					// For remote instances, fetch directly from that instance
+					// Try HTTPS first, then fall back to HTTP
+					healthUrl = `https://${props.network.host}/api/health`;
+				}
+
+				const response = await fetch(healthUrl);
 
 				if (!response.ok) {
 					throw new Error(`Failed to fetch health: ${response.statusText}`);
@@ -100,6 +115,25 @@ export default defineComponent({
 				const data = await response.json();
 				healthData.value = data;
 			} catch (e) {
+				// If HTTPS failed for remote instance, try HTTP
+				if (
+					!["127.0.0.1", "0.0.0.0", "localhost"].includes(props.network.host) &&
+					e instanceof TypeError
+				) {
+					try {
+						const httpUrl = `http://${props.network.host}/api/health`;
+						const response = await fetch(httpUrl);
+
+						if (response.ok) {
+							const data = await response.json();
+							healthData.value = data;
+							return;
+						}
+					} catch {
+						// Fall through to error handling
+					}
+				}
+
 				error.value = e instanceof Error ? e.message : "Failed to fetch health data";
 			} finally {
 				isLoading.value = false;
