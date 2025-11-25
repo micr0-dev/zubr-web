@@ -38,23 +38,12 @@ export default <IrcEventHandler>function (irc, network) {
 		const currentNameIsLocal =
 			localAddresses.includes(network.name) || network.name === "Home Server";
 
-		// If NETWORK option not available and this is the home server, try to extract domain from zubrServer.url
+		// If NETWORK option not available and this is the home server, use the site domain from Host header
 		if (!serverNetworkName && isHomeServer && currentNameIsLocal) {
-			const zubrUrl = Config.values.zubrServer?.url;
-			if (zubrUrl) {
-				try {
-					const url = new URL(zubrUrl);
-					// Use the hostname from zubrServer URL (e.g., "zubr.chat" from "https://zubr.chat:3000")
-					// But only if it's not also a local address
-					if (!localAddresses.includes(url.hostname)) {
-						serverNetworkName = url.hostname;
-						log.info(
-							`Home server using domain from zubrServer.url: ${serverNetworkName}`
-						);
-					}
-				} catch (e) {
-					log.debug(`Failed to parse zubrServer.url: ${e}`);
-				}
+			const siteDomain = client.config.browser?.siteDomain;
+			if (siteDomain) {
+				serverNetworkName = siteDomain;
+				log.info(`Home server using domain from Host header: ${serverNetworkName}`);
 			}
 		}
 

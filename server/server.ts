@@ -782,6 +782,34 @@ function getClientLanguage(socket: Socket): string | undefined {
 	return undefined;
 }
 
+// ZUBR-WEB: Get the site domain from the Host header
+function getSiteDomain(socket: Socket): string | undefined {
+	const host = socket.handshake.headers["host"];
+
+	if (typeof host === "string") {
+		// Remove port if present (e.g., "zubr.chat:9000" -> "zubr.chat")
+		const domain = host.split(":")[0];
+
+		// Don't return localhost/127.0.0.1 as the domain
+		if (domain && !["127.0.0.1", "0.0.0.0", "localhost"].includes(domain)) {
+			return domain;
+		}
+	}
+
+	// Try X-Forwarded-Host for reverse proxy setups
+	const forwardedHost = socket.handshake.headers["x-forwarded-host"];
+
+	if (typeof forwardedHost === "string") {
+		const domain = forwardedHost.split(":")[0];
+
+		if (domain && !["127.0.0.1", "0.0.0.0", "localhost"].includes(domain)) {
+			return domain;
+		}
+	}
+
+	return undefined;
+}
+
 function getClientIp(socket: Socket): string {
 	let ip = socket.handshake.address || "127.0.0.1";
 
@@ -1419,6 +1447,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 			ip: clientIP,
 			isSecure: getClientSecure(socket),
 			language: getClientLanguage(socket),
+			siteDomain: getSiteDomain(socket), // ZUBR-WEB: Store site domain for home server naming
 		};
 
 		// If webirc is enabled perform reverse dns lookup

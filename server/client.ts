@@ -82,6 +82,7 @@ export type UserConfig = {
 		ip?: string;
 		hostname?: string;
 		isSecure?: boolean;
+		siteDomain?: string; // ZUBR-WEB: Domain from Host header for home server naming
 	};
 	networks?: NetworkConfig[];
 };
