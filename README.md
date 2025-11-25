@@ -6,7 +6,7 @@
 </h1>
 
 <h3 align="center">
-	Bringing IRC into the modern era
+	Instance-based decentralized federated chat
 </h3>
 
 <p align="center">
@@ -21,12 +21,12 @@
 
 ## What is Zubr?
 
-**Zubr** is a hard fork of [The Lounge](https://github.com/thelounge/thelounge), designed to modernize the IRC experience while maintaining compatibility with the IRC protocol. Zubr consists of two main components:
+**Zubr-web** is a hard fork of [The Lounge](https://github.com/thelounge/thelounge). Zubr consists of two main components:
 
 - **[Zubr Server](https://github.com/micr0-dev/zubr-server)**: A modern IRC server wrapper powered by insIRCd with enhanced features, built-in user management and authentication flow.
 - **Zubr Web**: A feature-rich web client that works Zubr servers.
 
-The point is to vertically integrate the IRC experience, making it more user-friendly and accessible to a broader audience.
+The point is to vertically integrate IRC experience, making it more user-friendly and accessible to a broader audience.
 
 ### Key Features
 
