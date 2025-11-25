@@ -89,6 +89,7 @@
 
 <script lang="ts">
 import socket from "../../js/socket";
+import storage from "../../js/localStorage";
 import RevealPassword from "../RevealPassword.vue";
 import {defineComponent, onBeforeUnmount, onMounted, ref} from "vue";
 
@@ -108,13 +109,21 @@ export default defineComponent({
 		const passwordConfirm = ref("");
 
 		const onRegisterSuccess = () => {
-			inFlight.value = false;
-			successShown.value = true;
-			errorShown.value = false;
-
-			// Reconnect the socket to reset auth state for sign-in
+			// Auto sign-in after successful registration
+			storage.set("user", username.value);
 			socket.disconnect();
 			socket.connect();
+
+			// Wait for socket to reconnect and auth:start, then sign in
+			const signInAfterConnect = () => {
+				socket.emit("auth:perform", {
+					user: username.value,
+					password: password.value,
+				});
+				socket.off("auth:start", signInAfterConnect);
+			};
+
+			socket.on("auth:start", signInAfterConnect);
 		};
 
 		const onRegisterFailed = (data: {error: string}) => {
