@@ -5,6 +5,28 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, user-scalable=no">
 
+	<!-- SEO and Social Meta Tags -->
+	<meta name="description" content="Zubr is a modern, federated chat platform. Connect with communities, join conversations, and chat in real-time.">
+	<meta name="keywords" content="zubr, chat, irc, federated, messaging, community, real-time">
+	<meta name="author" content="Zubr">
+
+	<!-- Open Graph / Facebook -->
+	<meta property="og:type" content="website">
+	<meta property="og:title" content="Zubr - Federated Chat">
+	<meta property="og:description" content="A modern, federated chat platform. Connect with communities, join conversations, and chat in real-time.">
+	<meta property="og:image" content="/img/logo-grey-bg-512x512px.png">
+	<meta property="og:image:width" content="512">
+	<meta property="og:image:height" content="512">
+	<meta property="og:image:alt" content="Zubr Logo">
+	<meta property="og:site_name" content="Zubr">
+
+	<!-- Twitter Card -->
+	<meta name="twitter:card" content="summary">
+	<meta name="twitter:title" content="Zubr - Federated Chat">
+	<meta name="twitter:description" content="A modern, federated chat platform. Connect with communities, join conversations, and chat in real-time.">
+	<meta name="twitter:image" content="/img/logo-grey-bg-512x512px.png">
+	<meta name="twitter:image:alt" content="Zubr Logo">
+
 	<link rel="preload" as="script" href="js/loading-error-handlers.js?v=<%- cacheBust %>">
 	<link rel="preload" as="script" href="js/bundle.vendor.js?v=<%- cacheBust %>">
 	<link rel="preload" as="script" href="js/bundle.js?v=<%- cacheBust %>">
