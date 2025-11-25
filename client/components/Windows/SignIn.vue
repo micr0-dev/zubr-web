@@ -110,20 +110,7 @@ export default defineComponent({
 			};
 
 			storage.set("user", values.user);
-
-			// Check if we're currently in guest mode (transitioning from guest to authenticated)
-			const isGuestMode = store.state.networks.some(
-				(network) => network.nick && network.nick.startsWith("web-user-")
-			);
-
-			if (isGuestMode && store.state.appLoaded) {
-				// If transitioning from guest mode, disconnect and reload to clear guest session
-				socket.disconnect();
-				storage.set("user", values.user);
-				window.location.reload();
-			} else {
-				socket.emit("auth:perform", values);
-			}
+			socket.emit("auth:perform", values);
 		};
 
 		const continueAsGuest = () => {

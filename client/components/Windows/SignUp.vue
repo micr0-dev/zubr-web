@@ -91,7 +91,6 @@
 import socket from "../../js/socket";
 import RevealPassword from "../RevealPassword.vue";
 import {defineComponent, onBeforeUnmount, onMounted, ref} from "vue";
-import {useStore} from "../../js/store";
 
 export default defineComponent({
 	name: "SignUp",
@@ -99,7 +98,6 @@ export default defineComponent({
 		RevealPassword,
 	},
 	setup() {
-		const store = useStore();
 		const inFlight = ref(false);
 		const errorShown = ref(false);
 		const successShown = ref(false);
@@ -137,18 +135,6 @@ export default defineComponent({
 			inFlight.value = true;
 			errorShown.value = false;
 			successShown.value = false;
-
-			// Check if we're currently in guest mode
-			const isGuestMode = store.state.networks.some(
-				(network) => network.nick && network.nick.startsWith("web-user-")
-			);
-
-			if (isGuestMode && store.state.appLoaded) {
-				// If in guest mode, disconnect and reload to clear guest session first
-				socket.disconnect();
-				window.location.reload();
-				return;
-			}
 
 			const values = {
 				user: username.value,
