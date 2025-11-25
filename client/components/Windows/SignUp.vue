@@ -111,6 +111,10 @@ export default defineComponent({
 			inFlight.value = false;
 			successShown.value = true;
 			errorShown.value = false;
+
+			// Reconnect the socket to reset auth state for sign-in
+			socket.disconnect();
+			socket.connect();
 		};
 
 		const onRegisterFailed = (data: {error: string}) => {
