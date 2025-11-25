@@ -47,10 +47,11 @@ socket.on("init", async function (data) {
 			return;
 		}
 
-		// If we are on an unknown route or still on SignIn component
+		// If we are on an unknown route or still on SignIn/SignUp component
 		// then we can open last known channel on server, or Connect window if none
 		console.log("[INIT] Current route:", router.currentRoute?.value?.name);
-		if (!router.currentRoute?.value?.name || router.currentRoute?.value?.name === "SignIn") {
+		const currentRouteName = router.currentRoute?.value?.name;
+		if (!currentRouteName || currentRouteName === "SignIn" || currentRouteName === "SignUp") {
 			const channel = store.getters.findChannel(data.active);
 
 			if (channel) {

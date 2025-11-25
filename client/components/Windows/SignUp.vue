@@ -110,9 +110,20 @@ export default defineComponent({
 
 		const onRegisterSuccess = () => {
 			// Auto sign-in after successful registration
-			// Store credentials and emit auth:perform directly
 			storage.set("user", username.value);
 
+			// Show loading screen
+			const loadingEl = document.getElementById("loading");
+			if (loadingEl) {
+				loadingEl.style.display = "flex";
+			}
+
+			const loadingMsg = document.getElementById("loading-page-message");
+			if (loadingMsg) {
+				loadingMsg.textContent = "Signing in...";
+			}
+
+			// Emit auth to sign in
 			socket.emit("auth:perform", {
 				user: username.value,
 				password: password.value,
