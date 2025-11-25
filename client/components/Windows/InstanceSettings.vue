@@ -89,7 +89,7 @@ export default defineComponent({
 			errorMessage.value = "";
 
 			try {
-				const response = await fetch(`/api/zubr-instance/${networkUuid}/settings`);
+				const response = await fetch(`/api/settings`);
 
 				if (!response.ok) {
 					const data = await response.json();
@@ -122,7 +122,7 @@ export default defineComponent({
 			}
 
 			try {
-				const response = await fetch(`/api/zubr-instance/${networkUuid}/settings`, {
+				const response = await fetch(`/api/settings`, {
 					method: "PATCH",
 					headers: {
 						"Content-Type": "application/json",
