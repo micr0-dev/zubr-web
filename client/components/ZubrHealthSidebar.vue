@@ -90,8 +90,8 @@ export default defineComponent({
 				isLoading.value = true;
 				error.value = null;
 
-				// Fetch health from the network's API
-				const response = await fetch(`/api/zubr-health/${props.network.uuid}`);
+				// Fetch health directly from Zubr server
+				const response = await fetch("/api/health");
 
 				if (!response.ok) {
 					throw new Error(`Failed to fetch health: ${response.statusText}`);

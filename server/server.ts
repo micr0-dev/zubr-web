@@ -131,24 +131,43 @@ export default async function (
 		return res.sendFile(path.join(packagePath, fileName));
 	});
 
-	// ZUBR-WEB: Health API endpoint
-	// ZUBR-WEB: Development-only proxy for /api/info to check signup mode
+	// ZUBR-WEB: Enable JSON body parsing for API routes
+	app.use(express.json());
+
+	// ZUBR-WEB: Development-only proxy for all /api/* routes
 	// In production, this should be handled by reverse proxy (nginx, caddy, etc.)
 	if (process.env.NODE_ENV !== "production") {
-		app.get("/api/info", async (req, res) => {
+		app.use("/api", async (req, res) => {
 			try {
-				// Proxy to the zubr-server API
 				const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
-				const response = await fetch(`${zubrServerUrl}/api/info`);
+				const apiPath = req.originalUrl; // e.g., /api/info, /api/health, etc.
+				const targetUrl = `${zubrServerUrl}${apiPath}`;
 
-				if (!response.ok) {
-					return res.status(response.status).json({error: "Failed to fetch instance info"});
+				const fetchOptions: RequestInit = {
+					method: req.method,
+					headers: {
+						"Content-Type": "application/json",
+					},
+				};
+
+				// Forward body for POST/PUT/PATCH requests
+				if (["POST", "PUT", "PATCH"].includes(req.method) && req.body) {
+					fetchOptions.body = JSON.stringify(req.body);
 				}
 
-				const data = await response.json();
-				res.json(data);
+				const response = await fetch(targetUrl, fetchOptions);
+
+				// Forward the response status and body
+				const contentType = response.headers.get("content-type");
+				if (contentType?.includes("application/json")) {
+					const data = await response.json();
+					return res.status(response.status).json(data);
+				} else {
+					const text = await response.text();
+					return res.status(response.status).send(text);
+				}
 			} catch (error) {
-				log.error("Error fetching instance info:", String(error));
+				log.error("Error proxying API request:", String(error));
 				res.status(500).json({error: "Internal server error"});
 			}
 		});
@@ -207,30 +226,6 @@ export default async function (
 			return res.status(500).json({error: "Failed to fetch health data"});
 		}
 	});
-
-	// ZUBR-WEB: Enable JSON body parsing for API routes
-	app.use(express.json());
-
-	// ZUBR-WEB: Development-only proxy for /api/users
-	// In production, this should be handled by reverse proxy (nginx, caddy, etc.)
-	if (process.env.NODE_ENV !== "production") {
-		app.get("/api/users", async (req, res) => {
-			try {
-				const zubrServerUrl = Config.values.zubrServer?.url || "http://localhost:3000";
-				const response = await fetch(`${zubrServerUrl}/api/users`);
-
-				if (!response.ok) {
-					return res.status(response.status).json({error: "Failed to fetch users"});
-				}
-
-				const data = await response.json();
-				res.json(data);
-			} catch (error) {
-				log.error("Error fetching users:", String(error));
-				res.status(500).json({error: "Internal server error"});
-			}
-		});
-	}
 
 	// ZUBR-WEB: Admin - Get user permissions
 	app.get("/api/zubr-admin/:networkId/users/:username/permissions", async (req, res) => {
@@ -1577,6 +1572,7 @@ function performAuthentication(this: Socket, data: AuthPerformData) {
 			nick: guestUsername,
 			username: guestUsername,
 			realname: "Zubr Web Guest",
+			channels: [{name: "#general"}],
 		} as any];
 
 		client.connect();
