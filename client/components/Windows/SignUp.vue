@@ -110,20 +110,13 @@ export default defineComponent({
 
 		const onRegisterSuccess = () => {
 			// Auto sign-in after successful registration
+			// Store credentials and emit auth:perform directly
 			storage.set("user", username.value);
-			socket.disconnect();
-			socket.connect();
 
-			// Wait for socket to reconnect and auth:start, then sign in
-			const signInAfterConnect = () => {
-				socket.emit("auth:perform", {
-					user: username.value,
-					password: password.value,
-				});
-				socket.off("auth:start", signInAfterConnect);
-			};
-
-			socket.on("auth:start", signInAfterConnect);
+			socket.emit("auth:perform", {
+				user: username.value,
+				password: password.value,
+			});
 		};
 
 		const onRegisterFailed = (data: {error: string}) => {
